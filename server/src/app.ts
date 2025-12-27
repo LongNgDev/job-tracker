@@ -6,6 +6,7 @@ import express, {
 } from "express";
 import cors from "cors";
 import morgan from "morgan";
+import routes from "./routes/routes.js";
 // import routes from "./routes/routes.js";
 
 const app: Application = express();
@@ -18,6 +19,7 @@ app.use(morgan("dev"));
 // Routes
 
 // Mount all route under /api
+app.use("/api", routes);
 
 // Health check
 app.use("/health", (_req: Request, res: Response, _next: NextFunction) => {

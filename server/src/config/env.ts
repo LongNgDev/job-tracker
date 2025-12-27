@@ -1,8 +1,10 @@
 import dotenv from "dotenv";
 import path from "path";
 
+// Extract the .env file from the parent folder
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 
+// Function: Return any match Key from the .env
 const get = (key: string, fallback?: string) => {
 	const value = process.env[key];
 	if (value === undefined) {
