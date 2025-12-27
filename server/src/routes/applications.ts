@@ -50,7 +50,7 @@ router.get("/", async (_req: Request, res: Response) => {
 			"SELECT * FROM application ORDER BY updated_at DESC"
 		);
 
-		if (result.rowCount === 0) return res.status(404).json("Data Not Found!");
+		if (result.rowCount === 0) return res.status(404).json("Not Found");
 
 		return res.status(200).json(result.rows);
 	} catch (e: any) {
@@ -67,9 +67,56 @@ router.get("/:id", async (req: Request, res: Response) => {
 			[id]
 		);
 
-		if (result.rowCount === 0) return res.status(404).json("Data Not Found!");
+		if (result.rowCount === 0) return res.status(404).json("Not Found");
 
 		return res.status(200).json(result.rows);
+	} catch (e: any) {
+		return res.status(500).json(e.message);
+	}
+});
+
+// UPDATE
+router.patch("/:id", async (req: Request, res: Response) => {
+	try {
+		const { id } = req.params;
+		const allowedList = new Set([
+			"status",
+			"stage",
+			"last_follow_up_at",
+			"next_follow_up_at",
+			"applied_at",
+			"notes",
+		]);
+
+		const entries = Object.entries(req.body).filter(
+			([key, value]) => allowedList.has(key) && value != undefined
+		);
+
+		if (entries.length === 0)
+			return res.status(400).json({ error: "No valid fields to update" });
+
+		const sets: string[] = [];
+		const params: any[] = [];
+
+		for (const [key, value] of entries) {
+			params.push(value);
+			sets.push(`${key} = $${params.length}`);
+		}
+
+		sets.push("updated_at = NOW()");
+
+		params.push(id);
+
+		const sql = `UPDATED application SET ${sets.join(", ")} WHERE id = $${
+			params.length
+		} RETURNING *`;
+
+		const result = await pool.query(sql, params);
+
+		if (result.rowCount === 0)
+			return res.status(404).json({ error: "Not found" });
+
+		return res.json(result.rows[0]);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
 	}
