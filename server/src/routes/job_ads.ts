@@ -19,22 +19,23 @@ router.post("/", async (req: Request, res: Response) => {
 			published_at,
 			location,
 			job_type,
-			platform,
+			source,
 			url,
 			skill_requirements,
 			tech_stack,
 			expired_at,
-			salary_range,
+			salary_max,
+			salary_min,
 		} = req.body;
 
 		const result = await pool.query(
 			`
 			INSERT INTO job_ads (
 				recruiter_id, company_name, job_title, job_description,
-				published_at, location, job_type, platform, url,
-				skill_requirements, tech_stack, expired_at, salary_range
+				published_at, location, job_type, source, url,
+				skill_requirements, tech_stack, expired_at, salary_max, salary_min
 				)
-				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
 				RETURNING *
 				`,
 			[
@@ -45,12 +46,13 @@ router.post("/", async (req: Request, res: Response) => {
 				published_at,
 				location,
 				job_type,
-				platform,
+				source,
 				url,
 				skill_requirements,
 				tech_stack,
 				expired_at,
-				salary_range,
+				salary_max,
+				salary_min,
 			]
 		);
 
@@ -107,12 +109,13 @@ router.patch("/:id", async (req: Request, res: Response) => {
 			"published_at",
 			"location",
 			"job_type",
-			"platform",
+			"source",
 			"url",
 			"skill_requirements",
 			"tech_stack",
 			"expired_at",
-			"salary_range",
+			"salary_min",
+			"salary_max",
 		]);
 
 		// Filter out key not valid and empty value

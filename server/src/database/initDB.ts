@@ -29,9 +29,11 @@ export const initDB = async () => {
 	    role varchar(255) NOT NULL DEFAULT 'Tech Recruiter',
 	    working_at varchar(255) NOT NULL,
 	    linkedin_url text,
-	    email_address varchar(255),
-	    phone_number varchar(50),
+	    email varchar(255),
+	    phone varchar(50),
 	    location varchar(255),
+			notes text,
+			created_at timestamptz NOT NULL DEFAULT now(),
 	    updated_at timestamptz NOT NULL DEFAULT now()
 	  );
 
@@ -44,12 +46,14 @@ export const initDB = async () => {
 	    published_at date NOT NULL,
 	    location varchar(255),
 	    job_type varchar(50) NOT NULL,
-	    platform varchar(50) NOT NULL,
+	    source varchar(50) NOT NULL,
 	    url text NOT NULL UNIQUE,
 	    skill_requirements varchar(255)[],
 	    tech_stack varchar(255)[],
 	    expired_at date,
-	    salary_range varchar(50),
+	    salary_min integer,
+	    salary_max integer,
+			created_at timestamptz NOT NULL DEFAULT now(),
 	    updated_at timestamptz NOT NULL DEFAULT now()
 	  );
 
@@ -57,12 +61,16 @@ export const initDB = async () => {
 	    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	    job_ads_id uuid NOT NULL REFERENCES public.job_ads(id),
 	    status varchar(50) NOT NULL,
+			stage varchar(50) NOT NULL,
+			last_follow_up_at date,
+			next_follow_up_at date,
 	    applied_at date NOT NULL,
+			notes text,
+			created_at timestamptz NOT NULL DEFAULT now(),
 	    updated_at timestamptz NOT NULL DEFAULT now()
 	  );
 
 	  COMMIT;
-
 	  `);
 		console.log("Successfully building database.");
 	} catch (e) {

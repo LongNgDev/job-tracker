@@ -17,22 +17,15 @@ router.post("/", async (req: Request, res: Response) => {
 			role,
 			working_at,
 			linkedIn_url,
-			email_address,
-			phone_number,
+			email,
+			phone,
 			location,
+			notes,
 		} = req.body;
 
 		const result = await pool.query(
-			`INSERT INTO recruiters (name, role, working_at, linkedIn_url, email_address, phone_number, location) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-			[
-				name,
-				role,
-				working_at,
-				linkedIn_url,
-				email_address,
-				phone_number,
-				location,
-			]
+			`INSERT INTO recruiters (name, role, working_at, linkedIn_url, email, phone, location, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+			[name, role, working_at, linkedIn_url, email, phone, location, notes]
 		);
 
 		return res.status(200).json(result.rows[0]);
@@ -82,9 +75,10 @@ router.patch("/:id", async (req: Request, res: Response) => {
 			"role",
 			"working_at",
 			"linkedIn_url",
-			"email_address",
-			"phone_number",
+			"email",
+			"phone",
 			"location",
+			"notes",
 		]);
 
 		// Filter out key not valid and empty value
