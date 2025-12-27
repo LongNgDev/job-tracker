@@ -132,7 +132,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 		if (result.rowCount === 0) {
 			return res.status(404).json({ error: "Not found" });
 		}
-		return res.status(204).json({ status: "OK" });
+		return res.status(204).send();
 	} catch (e: any) {
 		return res.status(500).json({ error: e.message });
 	}

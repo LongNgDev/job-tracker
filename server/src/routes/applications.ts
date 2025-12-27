@@ -9,7 +9,6 @@ router.get("/health", (_req: Request, res: Response) => {
 });
 
 // CRUD
-
 // CREATE
 router.post("/", async (req: Request, res: Response) => {
 	try {
@@ -24,7 +23,7 @@ router.post("/", async (req: Request, res: Response) => {
 		} = req.body;
 
 		const result = await pool.query(
-			"INSERT INTO applications(job_ads_id, status, stage, last_follow_up_at, next_follow_up_at, applied_at, notes) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+			"INSERT INTO applications (job_ads_id, status, stage, last_follow_up_at, next_follow_up_at, applied_at, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
 			[
 				job_ads_id,
 				status,
@@ -47,7 +46,7 @@ router.post("/", async (req: Request, res: Response) => {
 router.get("/", async (_req: Request, res: Response) => {
 	try {
 		const result = await pool.query(
-			"SELECT * FROM application ORDER BY updated_at DESC"
+			"SELECT * FROM applications ORDER BY updated_at DESC"
 		);
 
 		if (result.rowCount === 0) return res.status(404).json("Not Found");
@@ -63,7 +62,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
 		const result = await pool.query(
-			"SELECT * FROM application WHERE id = $1 ORDER BY updated_at DESC",
+			"SELECT * FROM applications WHERE id = $1 ORDER BY updated_at DESC",
 			[id]
 		);
 
@@ -107,7 +106,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
 
 		params.push(id);
 
-		const sql = `UPDATED application SET ${sets.join(", ")} WHERE id = $${
+		const sql = `UPDATE applications SET ${sets.join(", ")} WHERE id = $${
 			params.length
 		} RETURNING *`;
 
@@ -128,14 +127,14 @@ router.delete("/:id", async (req: Request, res: Response) => {
 		const { id } = req.params;
 
 		const result = await pool.query(
-			"DELETE FROM job_ads WHERE id = $1 RETURNING *",
+			"DELETE FROM applications WHERE id = $1 RETURNING *",
 			[id]
 		);
 
 		if (result.rowCount === 0) {
 			return res.status(404).json({ error: "Not found" });
 		}
-		return res.status(204).json({ status: "OK" });
+		return res.status(204).send();
 	} catch (e: any) {
 		return res.status(500).json({ error: e.message });
 	}
