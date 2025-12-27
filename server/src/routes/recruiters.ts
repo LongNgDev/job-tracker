@@ -74,4 +74,74 @@ router.get("/:id", async (req: Request, res: Response) => {
 	}
 });
 
+// UPDATE:
+router.patch("/:id", async (req: Request, res: Response) => {
+	try {
+		const { id } = req.params;
+
+		const allowedList = new Set([
+			"role",
+			"working_at",
+			"linkedIn_url",
+			"email_address",
+			"phone_number",
+			"location",
+		]);
+
+		// Filter out key not valid and empty value
+		const entries = Object.entries(req.body).filter(
+			([key, value]) => allowedList.has(key) && value != undefined
+		);
+
+		// Return if not valid fields
+		if (entries.length === 0) {
+			return res.status(400).json({ error: "No valid fields to update" });
+		}
+
+		const sets: string[] = [];
+		const params: any[] = [];
+
+		for (const [key, value] of entries) {
+			params.push(value);
+			sets.push(`${key} = $${params.length}`);
+		}
+
+		// updated field updated_at to current timestamp
+		sets.push("updated_at = NOW()");
+
+		params.push(id);
+
+		const sql = `UPDATE recruiters SET ${sets.join(", ")} WHERE id = $${
+			params.length
+		} RETURNING *`;
+
+		const result = await pool.query(sql, params);
+
+		if (result.rowCount === 0)
+			return res.status(404).json({ error: "Not found" });
+
+		return res.status(200).json(result.rows[0]);
+	} catch (e: any) {
+		return res.status(500).json(e.message);
+	}
+});
+
+// DELETE:
+router.delete("/:id", async (req: Request, res: Response) => {
+	try {
+		const { id } = req.params;
+
+		const result = await pool.query(
+			"DELETE FROM recruiters WHERE id = $1 RETURNING *",
+			[id]
+		);
+
+		if (result.rowCount === 0) {
+			return res.status(404).json({ error: "Not found" });
+		}
+		return res.status(204).json({ status: "OK" });
+	} catch (e: any) {
+		return res.status(500).json({ error: e.message });
+	}
+});
 export default router;
