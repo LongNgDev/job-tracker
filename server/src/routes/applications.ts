@@ -122,4 +122,23 @@ router.patch("/:id", async (req: Request, res: Response) => {
 	}
 });
 
+// DELETE:
+router.delete("/:id", async (req: Request, res: Response) => {
+	try {
+		const { id } = req.params;
+
+		const result = await pool.query(
+			"DELETE FROM job_ads WHERE id = $1 RETURNING *",
+			[id]
+		);
+
+		if (result.rowCount === 0) {
+			return res.status(404).json({ error: "Not found" });
+		}
+		return res.status(204).json({ status: "OK" });
+	} catch (e: any) {
+		return res.status(500).json({ error: e.message });
+	}
+});
+
 export default router;
