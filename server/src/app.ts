@@ -41,7 +41,8 @@ app.use(
 app.use("/api/auth", auth);
 
 // Mount all protected route under /api
-app.use("/api", requireAuth, routes);
+// app.use("/api", requireAuth, routes);
+app.use("/api", routes);
 
 // Health check
 app.use("/health", (_req: Request, res: Response, _next: NextFunction) => {

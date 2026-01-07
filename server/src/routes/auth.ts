@@ -46,8 +46,8 @@ router.post("/signup", async (req: Request, res: Response) => {
 	}
 });
 
-// Signin API
-router.post("/signin", async (req: Request, res: Response) => {
+// Login API
+router.post("/login", async (req: Request, res: Response) => {
 	try {
 		const { email, password } = req.body;
 
@@ -75,17 +75,15 @@ router.post("/signin", async (req: Request, res: Response) => {
 
 		req.session.save((err) => {
 			if (err) return res.status(500).json({ error: "Session save failed" });
-			res.json({ ok: true });
+			return res.json({ ok: true });
 		});
-
-		// return res.json({ ok: true });
 	} catch (e: any) {
 		return res.status(401).json(e.message);
 	}
 });
 
 // Logout API
-router.post("/signout", async (req: Request, res: Response) => {
+router.post("/logout", async (req: Request, res: Response) => {
 	try {
 		req.session.destroy(() => {
 			res.clearCookie("sid");

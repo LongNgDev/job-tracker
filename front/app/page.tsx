@@ -1,7 +1,16 @@
+import JobTable from "./components/jobTable";
+import NavBar from "./components/navBar";
+
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main>test</main>
+    <div className="bg-background flex min-h-screen max-w-screen">
+      {/* Navbar Section */}
+      <NavBar />
+
+      {/* Content Section */}
+      <main className="grow">
+        <JobTable />
+      </main>
     </div>
   );
 }
