@@ -1,6 +1,18 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
 import { columns } from "./columns";
 import NavBar from "./components/navBar";
 import { DataTable } from "./data-table";
+import { useState } from "react";
+import { Form, useForm } from "react-hook-form";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
 type JobAds = {
   company_name: string;
@@ -10,8 +22,7 @@ type JobAds = {
   job_type:
     | ["Full-time", "Part-time", "Casual", "Contract", "Internship"]
     | string;
-  salary_min?: string;
-  salary_max?: string;
+
   created_at: string;
 };
 
@@ -22,8 +33,7 @@ const jobAds: JobAds[] = [
     published_at: new Date().toLocaleDateString(),
     location: "A",
     job_type: "Casual",
-    salary_min: "100",
-    salary_max: "200",
+
     created_at: new Date().toLocaleDateString(),
   },
   {
@@ -32,21 +42,61 @@ const jobAds: JobAds[] = [
     published_at: new Date().toLocaleDateString(),
     location: "B",
     job_type: "C",
-    salary_min: "100",
     created_at: new Date().toLocaleDateString(),
   },
 ];
 
 export default function Home() {
+  const [isBuilding, setBuild] = useState(false);
+
+  const form = useForm();
+
+  const openCreateForm = () => setBuild(true);
+
   return (
     <div className="bg-background flex min-h-screen max-w-screen select-none">
       {/* Navbar Section */}
       <NavBar />
 
       {/* Content Section */}
-      <main className="grow overflow-auto">
+      <main className="flex grow flex-col gap-2 overflow-auto p-4">
         {/* Create Button */}
-        <DataTable columns={columns} data={jobAds} />
+
+        {isBuilding ? (
+          <div>
+            <h2>Job Ads</h2>
+            <Form>
+              <FormField
+                control={form.control}
+                name="company_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="name..." {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </Form>
+          </div>
+        ) : (
+          <>
+            <div className="group self-end">
+              <Button
+                className="group-hover:cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+
+                  openCreateForm();
+                }}
+              >
+                Create Job
+              </Button>
+            </div>
+            <DataTable columns={columns} data={jobAds} />
+          </>
+        )}
       </main>
     </div>
   );

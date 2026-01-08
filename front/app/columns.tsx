@@ -29,8 +29,7 @@ export type JobAds = {
   job_type:
     | ["Full-time", "Part-time", "Casual", "Contract", "Internship"]
     | string;
-  salary_min?: string;
-  salary_max?: string;
+
   created_at: string;
 };
 
@@ -54,14 +53,6 @@ export const columns: ColumnDef<JobAds>[] = [
   {
     accessorKey: "job_type",
     header: "Job Type",
-  },
-  {
-    accessorKey: "salary_min",
-    header: "Salary Min",
-  },
-  {
-    accessorKey: "salary_max",
-    header: "Salary Max",
   },
   {
     accessorKey: "created_at",

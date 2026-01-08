@@ -2,7 +2,7 @@ import Link from "next/link";
 
 function NavBar() {
   return (
-    <div className="bg-primary text-primary-foreground min-h-screen">
+    <div className="bg-primary/90 text-primary-foreground min-h-screen">
       <main className="flex h-full w-56 flex-col items-center justify-between px-4">
         <div className="flex w-full grow flex-col gap-4">
           {/* Title */}

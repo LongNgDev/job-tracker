@@ -33,9 +33,9 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="p-4">
+    <div>
       <div className="shadow-accent/75 rounded-md shadow-2xl">
-        <Table className="bg-accent/35 rounded-md text-center">
+        <Table className="bg-accent/35 overflow-hidden rounded-md text-center">
           <TableHeader className="bg-accent">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-accent!">
