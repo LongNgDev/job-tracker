@@ -6,7 +6,6 @@ import { z } from "zod";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -15,6 +14,7 @@ import {
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const formSchema = z
   .object({
@@ -71,7 +71,13 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
   const [stackInput, setStackInput] = useState("");
   // 2. Define a submit handler
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    toast.success("Job ads has been created.", {
+      description: `${values.company_name} · ${values.job_title}`,
+      action: {
+        label: "Done",
+        onClick: () => {},
+      },
+    });
   }
 
   return (
@@ -429,8 +435,7 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
             <div className="col-start-2 mt-6 flex justify-end gap-4">
               <Button
                 type="reset"
-                onClick={(e) => {
-                  e.preventDefault();
+                onClick={() => {
                   form.reset();
                   toggleCreate();
                 }}
@@ -439,7 +444,14 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="hover:cursor-pointer">
+              <Button
+                type="submit"
+                className="hover:cursor-pointer"
+                onClick={() => {
+                  form.reset();
+                  toggleCreate();
+                }}
+              >
                 Save
               </Button>
             </div>
