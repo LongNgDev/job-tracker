@@ -15,6 +15,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Textarea } from "./ui/textarea";
 
 const formSchema = z
   .object({
@@ -54,7 +55,7 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
       company_name: "",
       job_title: "",
       job_description: "",
-      published_at: new Date(), // or undefined if you want blank
+      published_at: undefined, // or undefined if you want blank
       location: "",
       job_type: "",
       source: "",
@@ -71,6 +72,7 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
   const [stackInput, setStackInput] = useState("");
   // 2. Define a submit handler
   function onSubmit(values: z.infer<typeof formSchema>) {
+    toggleCreate();
     toast.success("Job ads has been created.", {
       description: `${values.company_name} · ${values.job_title}`,
       action: {
@@ -93,6 +95,11 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
             onSubmit={form.handleSubmit(onSubmit)}
             className="row-auto grid grid-cols-2 gap-6"
           >
+            {/* Info Section seperate */}
+            <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
+              Basics
+            </div>
+
             {/* Company Name */}
             <FormField
               control={form.control}
@@ -123,59 +130,6 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
                     <Input
                       placeholder="e.g. Junior Software Engineer"
                       {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Job Description */}
-            <FormField
-              control={form.control}
-              name="job_description"
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>
-                    Job Description<span className="text-red-600">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Paste a short summary..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Published At */}
-            <FormField
-              control={form.control}
-              name="published_at"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Published At</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      onChange={(e) => field.onChange(e.target.value)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Expired At (optional) */}
-            <FormField
-              control={form.control}
-              name="expired_at"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expired At</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      onChange={(e) => field.onChange(e.target.value)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -218,6 +172,33 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
               )}
             />
 
+            {/* Job Description */}
+            <FormField
+              control={form.control}
+              name="job_description"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>
+                    Job Description<span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    {/* <Input placeholder="Paste a short summary..." {...field} /> */}
+                    <Textarea
+                      className="max-h-52 min-h-24 resize-y"
+                      placeholder="Paste a short summary..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Info Section seperate */}
+            <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
+              Posting Info
+            </div>
+
             {/* Source */}
             <FormField
               control={form.control}
@@ -251,6 +232,50 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
                 </FormItem>
               )}
             />
+
+            {/* Published At */}
+            <FormField
+              control={form.control}
+              name="published_at"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Published At<span className="text-red-600">*</span>
+                  </FormLabel>
+
+                  <FormControl>
+                    <Input
+                      type="date"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Expired At (optional) */}
+            <FormField
+              control={form.control}
+              name="expired_at"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expired At</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Info Section seperate */}
+            <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
+              Requirements
+            </div>
 
             {/* Skill Requirements (basic: comma-separated -> array) */}
             <FormField
@@ -382,6 +407,11 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
               )}
             />
 
+            {/* Info Section seperate */}
+            <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
+              Others
+            </div>
+
             {/* Salary Min (optional) */}
             <FormField
               control={form.control}
@@ -444,14 +474,7 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                className="hover:cursor-pointer"
-                onClick={() => {
-                  form.reset();
-                  toggleCreate();
-                }}
-              >
+              <Button type="submit" className="hover:cursor-pointer">
                 Save
               </Button>
             </div>
