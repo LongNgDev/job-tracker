@@ -65,7 +65,7 @@ router.post("/", async (req: Request, res: Response) => {
 // RETRIEVE:
 
 // Retrieve All
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (_req: Request, res: Response) => {
 	try {
 		// const { id, platform, job_title } = req.query;
 		const result = await pool.query(
@@ -78,6 +78,19 @@ router.get("/", async (req: Request, res: Response) => {
 		return res.status(200).json(result.rows);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
+	}
+});
+
+// Retrieve data for job_ads table
+router.get("/table", async (_req: Request, res: Response) => {
+	try {
+		const data = await pool.query(
+			"SELECT company_name, job_title, job_type, location, source, published_at FROM job_ads ORDER BY updated_at DESC"
+		);
+
+		return res.status(200).json(data.rows);
+	} catch (e: any) {
+		return res.status(404).json({ msg: "Data not found!" });
 	}
 });
 
