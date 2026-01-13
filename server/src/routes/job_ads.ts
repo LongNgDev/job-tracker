@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { pool } from "../database/db.js";
+import { createJobSchema } from "../schema/job_ads.js";
 
 const router: Router = Router();
 
@@ -11,8 +12,14 @@ router.get("/health", (_req: Request, res: Response) => {
 // CREATE: insert obj into database
 router.post("/", async (req: Request, res: Response) => {
 	try {
+		const parsed = createJobSchema.safeParse(req.body);
+
+		if (!parsed.success) {
+			console.error(parsed.error);
+			return res.status(400).json({ error: parsed.error });
+		}
+
 		const {
-			recruiter_id,
 			company_name,
 			job_title,
 			job_description,
@@ -26,20 +33,19 @@ router.post("/", async (req: Request, res: Response) => {
 			expired_at,
 			salary_max,
 			salary_min,
-		} = req.body;
+		} = parsed.data;
 
 		const result = await pool.query(
 			`
 			INSERT INTO job_ads (
-				recruiter_id, company_name, job_title, job_description,
+				company_name, job_title, job_description,
 				published_at, location, job_type, source, url,
 				skill_requirements, tech_stack, expired_at, salary_max, salary_min
 				)
-				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
 				RETURNING *
 				`,
 			[
-				recruiter_id,
 				company_name,
 				job_title,
 				job_description,
@@ -58,7 +64,29 @@ router.post("/", async (req: Request, res: Response) => {
 
 		return res.status(201).json(result.rows[0]);
 	} catch (e: any) {
-		res.status(500).json({ error: e.message });
+		console.error("DB ERROR:", e); // keep this
+
+		// Unique violation (url dup)
+		if (e.code === "23505") {
+			return res.status(409).json({
+				message: "Duplicate value",
+				field: e.constraint, // e.g. job_ads_url_key
+				detail: e.detail, // shows which value duplicated
+			});
+		}
+
+		// Not-null violation
+		if (e.code === "23502") {
+			return res.status(400).json({
+				message: "Missing required field",
+				detail: e.detail,
+			});
+		}
+
+		return res.status(500).json({
+			message: "Internal server error",
+			detail: e.message,
+		});
 	}
 });
 

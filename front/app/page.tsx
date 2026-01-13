@@ -2,11 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { columns } from "./columns";
-import NavBar from "./components/navBar";
+import NavBar from "../components/navBar";
 import { DataTable } from "./data-table";
 import { useEffect, useState } from "react";
 
-import { JobAdsForm } from "@/components/job-ads-form";
+import { JobAdsForm } from "@/components/forms/job-ads-form";
 
 type JobAds = {
   company_name: string;
@@ -20,24 +20,26 @@ type JobAds = {
 };
 
 export default function Home() {
-  const toggleCreateForm = () => setBuild(!isBuilding);
   const [isBuilding, setBuild] = useState(false);
   const [jobAds, setJobsAds] = useState<JobAds[]>([]);
 
-  useEffect(() => {
-    const fetchJobAds = async () => {
-      const res = await fetch("http://localhost:4000/api/job_ads/table");
-      if (!res.ok) {
-        console.error("Fetched failed!");
-        return;
-      }
-      const data = await res.json();
-      setJobsAds(data);
-    };
+  const fetchJobAds = async () => {
+    const res = await fetch("http://localhost:4000/api/job_ads/table");
+    if (!res.ok) {
+      console.error("Fetched failed!");
+      return;
+    }
+    const data = await res.json();
+    setJobsAds(data);
+  };
 
-    fetchJobAds();
-    return;
+  useEffect(() => {
+    (async () => {
+      await fetchJobAds();
+    })();
   }, []);
+
+  const toggleCreateForm = () => setBuild(!isBuilding);
 
   return (
     <div className="bg-background flex h-full min-h-screen max-w-screen select-none">

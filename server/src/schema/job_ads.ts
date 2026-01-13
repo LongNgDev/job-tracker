@@ -23,8 +23,8 @@ export const createJobSchema = z
 	})
 	.refine(
 		(d) =>
-			d.salary_min == null ||
-			d.salary_max == null ||
+			d.salary_min == undefined ||
+			d.salary_max == undefined ||
 			d.salary_min <= d.salary_max,
 		{ path: ["salary_max"], message: "Salary max must be >= min" }
 	)

@@ -10,12 +10,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+} from "../ui/form";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Textarea } from "./ui/textarea";
+import { Textarea } from "../ui/textarea";
 
 const formSchema = z
   .object({
@@ -56,12 +56,12 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
       job_title: "",
       job_description: "",
       published_at: undefined, // or undefined if you want blank
-      location: "",
+      location: undefined,
       job_type: "",
       source: "",
-      url: "",
-      skill_requirements: [],
-      tech_stack: [],
+      url: undefined,
+      skill_requirements: undefined,
+      tech_stack: undefined,
       expired_at: undefined,
       salary_min: undefined,
       salary_max: undefined,
@@ -71,15 +71,35 @@ export function JobAdsForm({ toggleCreate }: { toggleCreate: () => void }) {
   const [skillInput, setSkillInput] = useState("");
   const [stackInput, setStackInput] = useState("");
   // 2. Define a submit handler
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    toggleCreate();
-    toast.success("Job ads has been created.", {
-      description: `${values.company_name} · ${values.job_title}`,
-      action: {
-        label: "Done",
-        onClick: () => {},
-      },
+
+  async function createJobAd(values: unknown) {
+    const res = await fetch("http://localhost:4000/api/job_ads/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
     });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
+    }
+
+    return res.json();
+  }
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      toast.promise(createJobAd(values), {
+        loading: "Creating job ad…",
+        success: () => {
+          toggleCreate();
+          return `Job ad created: ${values.company_name} · ${values.job_title}`;
+        },
+        error: (e) => e.message,
+      });
+    } catch (e) {
+      console.error("Error:", e);
+    }
   }
 
   return (
