@@ -34,16 +34,16 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="shadow-accent/75 rounded-md shadow-2xl">
-        <Table className="bg-accent/35 overflow-hidden rounded-md text-center">
-          <TableHeader className="bg-accent">
+      <div className="shadow-primary/75 rounded-md shadow-2xl">
+        <Table className="bg-primary/35 overflow-hidden rounded-md text-center">
+          <TableHeader className="bg-primary">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-accent!">
+              <TableRow key={headerGroup.id} className="hover:bg-primary!">
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead
                       key={header.id}
-                      className="text-center first:rounded-tl-md last:rounded-tr-md"
+                      className="text-primary-foreground/90 text-center first:rounded-tl-md last:rounded-tr-md"
                     >
                       {header.isPlaceholder
                         ? null

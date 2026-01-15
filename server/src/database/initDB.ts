@@ -39,7 +39,7 @@ export const initDB = async () => {
 				email varchar(255),
 				phone varchar(50),
 				location varchar(255),
-				notes text,
+				note text,
 				created_at timestamptz NOT NULL DEFAULT now(),
 				updated_at timestamptz NOT NULL DEFAULT now()
 			);
@@ -60,6 +60,7 @@ export const initDB = async () => {
 				expired_at date,
 				salary_min integer,
 				salary_max integer,
+				note text,
 				created_at timestamptz NOT NULL DEFAULT now(),
 				updated_at timestamptz NOT NULL DEFAULT now()
 			);
@@ -72,7 +73,7 @@ export const initDB = async () => {
 				last_follow_up_at date,
 				next_follow_up_at date,
 				applied_at date NOT NULL,
-				notes text,
+				note text,
 				created_at timestamptz NOT NULL DEFAULT now(),
 				updated_at timestamptz NOT NULL DEFAULT now()
 			);

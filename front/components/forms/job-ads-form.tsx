@@ -486,12 +486,12 @@ export function JobAdsForm() {
               )}
             />
 
-            <div className="col-start-2 mt-6 flex justify-end gap-4">
+            <div className="col-start-2 mt-6 flex justify-end gap-2">
               <Button
                 type="reset"
                 onClick={() => {
                   form.reset();
-                  router.push("/");
+                  router.push("/jobs");
                 }}
                 className="hover:cursor-pointer"
                 variant={"destructive"}

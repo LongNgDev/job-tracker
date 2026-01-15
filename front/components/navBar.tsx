@@ -7,14 +7,16 @@ function NavBar() {
         <div className="flex w-full grow flex-col gap-4">
           {/* Title */}
 
-          <h1 className="py-4 text-center text-2xl font-bold">Job Tracker</h1>
+          <Link href={"/jobs"}>
+            <h1 className="py-4 text-center text-2xl font-bold">Job Tracker</h1>
+          </Link>
 
           {/* Navigations */}
           <nav className="w-full">
             <ul className="flex flex-col gap-1 font-semibold">
               <li>
                 <Link
-                  href={"#"}
+                  href={"/jobs/form"}
                   className="hover:bg-secondary block rounded-sm p-1"
                 >
                   Quick Create
@@ -22,7 +24,7 @@ function NavBar() {
               </li>
               <li>
                 <Link
-                  href={"#"}
+                  href={"/jobs"}
                   className="hover:bg-secondary block rounded-sm p-1"
                 >
                   Job Ads
