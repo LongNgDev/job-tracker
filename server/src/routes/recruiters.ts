@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { pool } from "../database/db.js";
+import { createRecruiterSchema } from "../schema/recruiter.js";
 
 const router: Router = Router();
 
@@ -12,20 +13,27 @@ router.get("/health", (_req: Request, res: Response) => {
 // CREATE:
 router.post("/", async (req: Request, res: Response) => {
 	try {
+		const parsed = createRecruiterSchema.safeParse(req.body);
+
+		if (!parsed.success) {
+			console.error(parsed.error);
+			return res.status(400).json({ error: parsed.error });
+		}
+
 		const {
 			name,
 			role,
 			working_at,
-			linkedIn_url,
+			linkedin_url,
 			email,
 			phone,
 			location,
-			notes,
-		} = req.body;
+			note,
+		} = parsed.data;
 
 		const result = await pool.query(
-			`INSERT INTO recruiters (name, role, working_at, linkedIn_url, email, phone, location, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-			[name, role, working_at, linkedIn_url, email, phone, location, notes]
+			`INSERT INTO recruiters (name, role, working_at, linkedin_url, email, phone, location, note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+			[name, role, working_at, linkedin_url, email, phone, location, note]
 		);
 
 		return res.status(200).json(result.rows[0]);
@@ -74,11 +82,11 @@ router.patch("/:id", async (req: Request, res: Response) => {
 		const allowedList = new Set([
 			"role",
 			"working_at",
-			"linkedIn_url",
+			"linkedin_url",
 			"email",
 			"phone",
 			"location",
-			"notes",
+			"note",
 		]);
 
 		// Filter out key not valid and empty value
