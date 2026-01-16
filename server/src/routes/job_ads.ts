@@ -144,7 +144,7 @@ router.patch("/:id/recruiter", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
 		const { recruiter_id } = z
-			.object({ recruiter_id: z.uuid() })
+			.object({ recruiter_id: z.uuid().nullable() })
 			.parse(req.body);
 
 		if (recruiter_id) {

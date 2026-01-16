@@ -15,27 +15,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dot } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import RecruiterSection from "@/app/recruiter/form/recruiter-section";
 
 function ViewJob() {
   const { id } = useParams<{ id: string }>();
   const [job, setJob] = useState<JobAd>();
-
   useEffect(() => {
-    const fetchJobAds = async () => {
-      const res = await fetch(`http://localhost:4000/api/job_ads/${id}`);
+    try {
+      const fetchJobAds = async () => {
+        const res = await fetch(`http://localhost:4000/api/job_ads/${id}`);
 
-      if (!res.ok) {
-        console.error("Fetched failed!");
-        return;
-      }
-      const data = await res.json();
-      console.log(data);
-      setJob(data);
-    };
+        if (!res.ok) {
+          console.error("Fetched failed!");
+          return;
+        }
 
-    fetchJobAds();
-
-    return;
+        const data = await res.json();
+        setJob(data);
+      };
+      fetchJobAds();
+    } catch (e) {
+      console.error("Error: ", e);
+    }
   }, [id]);
 
   return (
@@ -215,7 +216,7 @@ function ViewJob() {
               </Card>
             </TabsContent>
           </Tabs>
-          <div className="w-50">recruiter section</div>
+          <RecruiterSection recruiter_id={job?.recruiter_id} job_id={id} />
         </div>
       </CardContent>
     </Card>
