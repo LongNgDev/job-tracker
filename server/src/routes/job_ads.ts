@@ -2,8 +2,37 @@ import { Router, type Request, type Response } from "express";
 import { pool } from "../database/db.js";
 import { createJobSchema } from "../schema/job_ads.js";
 import z from "zod";
+import DOMPurify from "isomorphic-dompurify";
 
 const router: Router = Router();
+
+// ✅ PATCH should allow partial updates
+const patchJobSchema = createJobSchema.partial();
+
+// ✅ Allowed fields for update
+const allowedList = new Set([
+	"recruiter_id",
+	"company_name",
+	"job_title",
+	"job_description",
+	"published_at",
+	"location",
+	"job_type",
+	"source",
+	"url",
+	"skill_requirements",
+	"tech_stack",
+	"expired_at",
+	"salary_min",
+	"salary_max",
+]);
+
+// Optional helper: reject unknown keys (nice for security/clean API)
+function rejectUnknownKeys(body: Record<string, unknown>) {
+	const keys = Object.keys(body);
+	const unknown = keys.filter((k) => !allowedList.has(k));
+	return unknown;
+}
 
 // Health check
 router.get("/health", (_req: Request, res: Response) => {
@@ -19,6 +48,9 @@ router.post("/", async (req: Request, res: Response) => {
 			console.error(parsed.error);
 			return res.status(400).json({ error: parsed.error });
 		}
+
+		// ✅ sanitise rich text HTML
+		const cleanDescription = DOMPurify.sanitize(parsed.data.job_description);
 
 		const {
 			company_name,
@@ -49,7 +81,7 @@ router.post("/", async (req: Request, res: Response) => {
 			[
 				company_name,
 				job_title,
-				job_description,
+				cleanDescription,
 				published_at,
 				location,
 				job_type,
@@ -60,7 +92,7 @@ router.post("/", async (req: Request, res: Response) => {
 				expired_at,
 				salary_max,
 				salary_min,
-			]
+			],
 		);
 
 		return res.status(201).json(result.rows[0]);
@@ -98,7 +130,7 @@ router.get("/", async (_req: Request, res: Response) => {
 	try {
 		// const { id, platform, job_title } = req.query;
 		const result = await pool.query(
-			"SELECT * FROM job_ads ORDER BY updated_at DESC"
+			"SELECT * FROM job_ads ORDER BY updated_at DESC",
 		);
 
 		if (result.rowCount === 0) {
@@ -114,7 +146,7 @@ router.get("/", async (_req: Request, res: Response) => {
 router.get("/table", async (_req: Request, res: Response) => {
 	try {
 		const data = await pool.query(
-			"SELECT id, company_name, job_title, job_type, location, source, published_at FROM job_ads ORDER BY updated_at DESC"
+			"SELECT id, company_name, job_title, job_type, location, source, published_at FROM job_ads ORDER BY updated_at DESC",
 		);
 
 		return res.status(200).json(data.rows);
@@ -129,7 +161,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 		const { id } = req.params;
 		const data = await pool.query(
 			"SELECT * FROM job_ads WHERE id = $1 ORDER BY updated_at DESC",
-			[id]
+			[id],
 		);
 
 		return res.status(200).json(data.rows[0]);
@@ -150,7 +182,7 @@ router.patch("/:id/recruiter", async (req: Request, res: Response) => {
 		if (recruiter_id) {
 			const recruiterExists = await pool.query(
 				`SELECT 1 FROM public.recruiters WHERE id = $1`,
-				[recruiter_id]
+				[recruiter_id],
 			);
 			if (recruiterExists.rowCount === 0) {
 				return res.status(404).json({ error: "Recruiter not found" });
@@ -164,7 +196,7 @@ router.patch("/:id/recruiter", async (req: Request, res: Response) => {
       WHERE id = $2
       RETURNING *
       `,
-			[recruiter_id, id]
+			[recruiter_id, id],
 		);
 
 		if (result.rowCount === 0) {
@@ -180,59 +212,70 @@ router.patch("/:id/recruiter", async (req: Request, res: Response) => {
 router.patch("/:id", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
-		const allowedList = new Set([
-			"recruiter_id",
-			"company_name",
-			"job_title",
-			"job_description",
-			"published_at",
-			"location",
-			"job_type",
-			"source",
-			"url",
-			"skill_requirements",
-			"tech_stack",
-			"expired_at",
-			"salary_min",
-			"salary_max",
-		]);
 
-		// Filter out key not valid and empty value
-		const entries = Object.entries(req.body).filter(
-			([key, value]) => allowedList.has(key) && value != undefined
+		// 1) Reject unknown keys early
+		const unknownKeys = rejectUnknownKeys(req.body ?? {});
+		if (unknownKeys.length > 0) {
+			return res.status(400).json({
+				error: `Unknown field(s): ${unknownKeys.join(", ")}`,
+			});
+		}
+
+		// 2) Validate as partial
+		const parsed = patchJobSchema.safeParse(req.body);
+		if (!parsed.success) {
+			return res.status(400).json({
+				error: parsed.error.flatten(),
+			});
+		}
+
+		const data = parsed.data;
+
+		// 3) Sanitise only if provided
+		if (data.job_description !== undefined) {
+			data.job_description = DOMPurify.sanitize(data.job_description);
+		}
+
+		// 4) Build update entries (ignore undefined)
+		const entries = Object.entries(data).filter(
+			([key, value]) => allowedList.has(key) && value !== undefined,
 		);
 
-		// Return if not valid fields
 		if (entries.length === 0) {
 			return res.status(400).json({ error: "No valid fields to update" });
 		}
 
-		const sets: string[] = []; // store the field
-		const params: any[] = []; // store the value
+		// 5) Create parameterised SQL
+		const sets: string[] = [];
+		const params: any[] = [];
 
-		// loop through the entries to push the key and value into 2 array to perform sql injection
 		for (const [key, value] of entries) {
 			params.push(value);
 			sets.push(`${key} = $${params.length}`);
 		}
 
-		// updated field updated_at to current timestamp
+		// Always update timestamp
 		sets.push("updated_at = NOW()");
 
+		// id is last param
 		params.push(id);
 
-		const sql = `UPDATE job_ads SET ${sets.join(", ")} WHERE id = $${
-			params.length
-		} RETURNING *`;
+		const sql = `
+      UPDATE job_ads
+      SET ${sets.join(", ")}
+      WHERE id = $${params.length}
+      RETURNING *;
+    `;
 
 		const result = await pool.query(sql, params);
 
-		if (result.rowCount === 0)
+		if (result.rowCount === 0) {
 			return res.status(404).json({ error: "Not found" });
+		}
 
 		return res.json(result.rows[0]);
 	} catch (e: any) {
-		res.status(500).json({ error: e.message });
+		return res.status(500).json({ error: e.message ?? "Server error" });
 	}
 });
 
@@ -243,7 +286,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
 		const result = await pool.query(
 			"DELETE FROM job_ads WHERE id = $1 RETURNING *",
-			[id]
+			[id],
 		);
 
 		if (result.rowCount === 0) {

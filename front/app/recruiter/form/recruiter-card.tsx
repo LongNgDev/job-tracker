@@ -4,7 +4,6 @@ import RecruiterForm from "@/components/forms/recruiter-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -18,12 +17,13 @@ import {
 
 import { Separator } from "@/components/ui/separator";
 import { FaLinkedin } from "react-icons/fa";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
 import { Recruiter } from "../recruiter.types";
 import Link from "next/link";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = z.object({
   name: z.string().min(2).max(50),
   role: z.string().min(2).max(50),
@@ -39,7 +39,7 @@ const formSchema = z.object({
   note: z.string().optional().optional(),
 });
 
-function RecruiterSection({
+function RecruiterCard({
   recruiter_id,
   job_id,
 }: {
@@ -141,7 +141,7 @@ function RecruiterSection({
       <CardHeader className="justify-center">
         <CardTitle>Recruiter</CardTitle>
       </CardHeader>
-      {/* <Separator /> */}
+      <Separator />
       <CardContent>
         {recruiter ? (
           <>
@@ -168,7 +168,7 @@ function RecruiterSection({
               </div>
 
               {/* Social Links */}
-              <div>
+              <div className="flex">
                 <Link href={recruiter.linkedin_url} target="_blank">
                   <FaLinkedin size={24} />
                 </Link>
@@ -197,4 +197,4 @@ function RecruiterSection({
   );
 }
 
-export default RecruiterSection;
+export default RecruiterCard;

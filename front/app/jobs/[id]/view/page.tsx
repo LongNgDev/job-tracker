@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dot } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import RecruiterSection from "@/app/recruiter/form/recruiter-section";
+import RecruiterSection from "@/app/recruiter/form/recruiter-card";
 
 function ViewJob() {
   const { id } = useParams<{ id: string }>();
@@ -212,7 +212,14 @@ function ViewJob() {
 
             <TabsContent value="description">
               <Card>
-                <CardContent>{job?.job_description}</CardContent>
+                <CardContent>
+                  <div
+                    className="prose max-w-none select-text"
+                    dangerouslySetInnerHTML={{
+                      __html: job?.job_description ?? "",
+                    }}
+                  />
+                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>

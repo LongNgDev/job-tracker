@@ -17,6 +17,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Textarea } from "../ui/textarea";
 import { useRouter } from "next/navigation";
+import Tiptap from "../ui/tiptap";
 
 const formSchema = z
   .object({
@@ -205,12 +206,16 @@ export function JobAdsForm() {
                     Job Description<span className="text-red-600">*</span>
                   </FormLabel>
                   <FormControl>
-                    {/* <Input placeholder="Paste a short summary..." {...field} /> */}
-                    <Textarea
+                    <Tiptap
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                    />
+
+                    {/* <Textarea
                       className="max-h-52 min-h-24 resize-y"
                       placeholder="Paste a short summary..."
                       {...field}
-                    />
+                    /> */}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
