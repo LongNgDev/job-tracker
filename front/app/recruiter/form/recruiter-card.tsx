@@ -65,7 +65,6 @@ function RecruiterCard({
 }) {
   const [recruiter, setRecruiter] = useState<Recruiter>();
   const [id, setID] = useState(recruiter_id);
-  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     setID(recruiter_id);
@@ -116,6 +115,26 @@ function RecruiterCard({
     } catch (e) {
       console.error(`Error: ${e}`);
     }
+  };
+
+  const detachRecruiter = async () => {
+    const res = await fetch(
+      `http://localhost:4000/api/job_ads/${job_id}/recruiter`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recruiter_id: null }),
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
+    }
+
+    setID(undefined);
+    setRecruiter(undefined);
+    return;
   };
 
   async function createRecruiter(values: z.infer<typeof formSchema>) {
@@ -191,7 +210,15 @@ function RecruiterCard({
               </div>
 
               <div className="flex justify-end">
-                <Button variant={"destructive"}>Remove</Button>
+                <Button
+                  variant={"destructive"}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    detachRecruiter();
+                  }}
+                >
+                  Remove
+                </Button>
               </div>
             </div>
           </>
