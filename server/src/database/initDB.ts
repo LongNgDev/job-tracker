@@ -56,10 +56,19 @@ export const initDB = async () => {
 				updated_at timestamptz NOT NULL DEFAULT now()
 			);
 
+			CREATE TABLE IF NOT EXISTS public.application_timeline (
+				id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+				application_id uuid NOT NULL REFERENCES public.applications(id) ON DELETE CASCADE,
+				event_type varchar(30) NOT NULL, 
+				title varchar(100) NOT NULL,
+				description text,
+				created_at timestamptz NOT NULL DEFAULT now()
+			);
+
 			CREATE TABLE IF NOT EXISTS public.job_ads (
 				id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 				recruiter_id uuid REFERENCES public.recruiters(id),
-				application_id uuid REFERENCES public.applications(id),
+				application_id uuid REFERENCES public.applications(id) ON DELETE CASCADE,
 				company_name varchar(255) NOT NULL,
 				job_title varchar(255) NOT NULL,
 				job_description text NOT NULL,

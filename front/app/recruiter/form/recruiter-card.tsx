@@ -31,6 +31,14 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { User } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = z.object({
@@ -181,6 +189,10 @@ function RecruiterCard({
                   <FaLinkedin size={24} />
                 </Link>
               </div>
+
+              <div className="flex justify-end">
+                <Button variant={"destructive"}>Remove</Button>
+              </div>
             </div>
           </>
         ) : (
@@ -196,19 +208,23 @@ function RecruiterCard({
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <Popover open={open} onOpenChange={setOpen}>
-                  <PopoverTrigger asChild>
+                <Dialog>
+                  <DialogTrigger asChild>
                     <Button>Add Recruiter</Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-full">
-                    <div className="p-4">
-                      <RecruiterForm
-                        onSubmit={onSubmit}
-                        onCancel={() => setOpen(false)}
-                      />
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                  </DialogTrigger>
+                  <DialogContent className="w-full">
+                    <DialogHeader>
+                      <DialogTitle className="flex justify-center">
+                        Recruiter Form
+                      </DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription></DialogDescription>
+                    <RecruiterForm
+                      onSubmit={onSubmit}
+                      onCancel={() => setOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
               </EmptyContent>
             </Empty>
           </div>

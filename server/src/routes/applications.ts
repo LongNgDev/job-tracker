@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { pool } from "../database/db.js";
 import { createApplicationSchema } from "../schema/application.js";
+import { createApplicationTimelineSchema } from "../schema/application-timeline.js";
 
 const router: Router = Router();
 
@@ -14,6 +15,20 @@ router.get("/health", (_req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response) => {
 	try {
 		const parsed = createApplicationSchema.safeParse(req.body);
+
+		// Function to initialise the timeline for the application
+		const initTimeline = async (applicationId: string) => {
+			const res = await pool.query(
+				"INSERT INTO application_timeline (application_id, event_type, title, description) VALUES ($1,$2,$3,$4)",
+				[
+					applicationId,
+					"system",
+					"Application Created",
+					"Application was created",
+				],
+			);
+			return res.rows[0];
+		};
 
 		if (!parsed.success) {
 			console.error(parsed.error);
@@ -32,6 +47,54 @@ router.post("/", async (req: Request, res: Response) => {
 		const result = await pool.query(
 			"INSERT INTO applications (status, stage, last_follow_up_at, next_follow_up_at, applied_at, note) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *",
 			[status, stage, last_follow_up_at, next_follow_up_at, applied_at, note],
+		);
+
+		initTimeline(result.rows[0].id);
+
+		return res.status(200).json(result.rows[0]);
+	} catch (e: any) {
+		console.error("DB ERROR:", e); // keep this
+
+		// Unique violation (url dup)
+		if (e.code === "23505") {
+			return res.status(409).json({
+				message: "Duplicate value",
+				field: e.constraint, // e.g. job_ads_url_key
+				detail: e.detail, // shows which value duplicated
+			});
+		}
+
+		// Not-null violation
+		if (e.code === "23502") {
+			return res.status(400).json({
+				message: "Missing required field",
+				detail: e.detail,
+			});
+		}
+
+		return res.status(500).json({
+			message: "Internal server error",
+			detail: e.message,
+		});
+	}
+});
+
+// Create a new timeline for the application
+router.post("/:id/timeline", async (req: Request, res: Response) => {
+	try {
+		const { id } = req.params;
+		const parsed = createApplicationTimelineSchema.safeParse(req.body);
+
+		if (!parsed.success) {
+			console.error(parsed.error);
+			return res.status(400).json({ error: parsed.error });
+		}
+
+		const { event_type, title, description } = parsed.data;
+
+		const result = await pool.query(
+			"INSERT INTO application_timeline (application_id, event_type, title, description) values ($1,$2,$3,$4)",
+			[id, event_type, title, description],
 		);
 
 		return res.status(200).json(result.rows[0]);
@@ -90,6 +153,23 @@ router.get("/:id", async (req: Request, res: Response) => {
 		if (result.rowCount === 0) return res.status(404).json("Not Found");
 
 		return res.status(200).json(result.rows[0]);
+	} catch (e: any) {
+		return res.status(500).json(e.message);
+	}
+});
+
+// Retrive the timeline list base on application ID
+router.get("/:id/timeline", async (req: Request, res: Response) => {
+	try {
+		const { id } = req.params;
+		const result = await pool.query(
+			"SELECT * FROM application_timeline WHERE application_id = $1",
+			[id],
+		);
+
+		if (result.rowCount === 0) return res.status(404).json("Not Found");
+
+		return res.status(200).json(result.rows);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
 	}
