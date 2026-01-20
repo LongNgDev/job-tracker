@@ -33,7 +33,7 @@ router.post("/", async (req: Request, res: Response) => {
 
 		const result = await pool.query(
 			`INSERT INTO recruiters (name, role, working_at, linkedin_url, email, phone, location, note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-			[name, role, working_at, linkedin_url, email, phone, location, note]
+			[name, role, working_at, linkedin_url, email, phone, location, note],
 		);
 
 		return res.status(200).json(result.rows[0]);
@@ -69,7 +69,7 @@ router.post("/", async (req: Request, res: Response) => {
 router.get("/", async (_req: Request, res: Response) => {
 	try {
 		const result = await pool.query(
-			"SELECT * FROM recruiters ORDER BY updated_at DESC"
+			"SELECT * FROM recruiters ORDER BY updated_at DESC",
 		);
 
 		if (result.rowCount === 0) return res.status(404).json("Data Not Found!");
@@ -113,7 +113,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
 
 		// Filter out key not valid and empty value
 		const entries = Object.entries(req.body).filter(
-			([key, value]) => allowedList.has(key) && value != undefined
+			([key, value]) => allowedList.has(key) && value != undefined,
 		);
 
 		// Return if not valid fields
@@ -156,7 +156,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
 		const result = await pool.query(
 			"DELETE FROM recruiters WHERE id = $1 RETURNING *",
-			[id]
+			[id],
 		);
 
 		if (result.rowCount === 0) {

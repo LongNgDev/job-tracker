@@ -23,14 +23,14 @@ const formSchema = z
     company_name: z.string().min(2).max(50),
     job_title: z.string().min(2).max(50),
     job_description: z.string().min(2),
-    published_at: z.coerce.date(),
+    published_at: z.string(),
     location: z.string().max(50).optional(),
     job_type: z.string().min(2).max(50),
     source: z.string().min(2).max(50),
     url: z.url().optional(),
     skill_requirements: z.array(z.string()).optional(),
     tech_stack: z.array(z.string()).optional(),
-    expired_at: z.coerce.date().optional(),
+    expired_at: z.string().optional(),
     salary_min: z.coerce.number().positive().optional(),
     salary_max: z.coerce.number().positive().optional(),
   })
@@ -58,7 +58,7 @@ export function JobAdsForm() {
       company_name: "",
       job_title: "",
       job_description: "",
-      published_at: new Date(), // or undefined if you want blank
+      published_at: new Date().toISOString().slice(0, 10), // or undefined if you want blank
       location: undefined,
       job_type: "",
       source: "",

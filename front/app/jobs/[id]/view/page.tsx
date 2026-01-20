@@ -7,30 +7,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { JobAd } from "../../job-ads.types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dot, FileQuestionMark } from "lucide-react";
+import { Dot } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import RecruiterSection from "@/app/recruiter/form/recruiter-card";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+
+import ApplicationCard from "@/app/application/form/application-card";
 
 function ViewJob() {
   const { id } = useParams<{ id: string }>();
   const [job, setJob] = useState<JobAd>();
   const [application, setApplication] = useState<JobAd>();
-
-  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -244,33 +236,7 @@ function ViewJob() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="h-full">
-                  <CardContent>
-                    <Empty>
-                      <EmptyHeader>
-                        <EmptyMedia variant={"icon"}>
-                          <FileQuestionMark />
-                        </EmptyMedia>
-                        <EmptyTitle>No Application Yet</EmptyTitle>
-                        <EmptyDescription>
-                          Create an application to start.
-                        </EmptyDescription>
-                      </EmptyHeader>
-                      <EmptyContent>
-                        <div>
-                          <Button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              router.push(`/application`);
-                            }}
-                          >
-                            Create Application
-                          </Button>
-                        </div>
-                      </EmptyContent>
-                    </Empty>
-                  </CardContent>
-                </Card>
+                <ApplicationCard />
               )}
             </TabsContent>
 

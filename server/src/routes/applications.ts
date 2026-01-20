@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { pool } from "../database/db.js";
+import { createApplicationSchema } from "../schema/application.js";
 
 const router: Router = Router();
 
@@ -12,6 +13,13 @@ router.get("/health", (_req: Request, res: Response) => {
 // CREATE
 router.post("/", async (req: Request, res: Response) => {
 	try {
+		const parsed = createApplicationSchema.safeParse(req.body);
+
+		if (!parsed.success) {
+			console.error(parsed.error);
+			return res.status(400).json({ error: parsed.error });
+		}
+
 		const {
 			job_ads_id,
 			status,
@@ -19,11 +27,11 @@ router.post("/", async (req: Request, res: Response) => {
 			last_follow_up_at,
 			next_follow_up_at,
 			applied_at,
-			notes,
-		} = req.body;
+			note,
+		} = parsed.data;
 
 		const result = await pool.query(
-			"INSERT INTO applications (job_ads_id, status, stage, last_follow_up_at, next_follow_up_at, applied_at, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+			"INSERT INTO applications (job_ads_id, status, stage, last_follow_up_at, next_follow_up_at, applied_at, note) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
 			[
 				job_ads_id,
 				status,
@@ -31,13 +39,35 @@ router.post("/", async (req: Request, res: Response) => {
 				last_follow_up_at,
 				next_follow_up_at,
 				applied_at,
-				notes,
-			]
+				note,
+			],
 		);
 
 		return res.status(200).json(result.rows[0]);
 	} catch (e: any) {
-		return res.status(500).json(e.message);
+		console.error("DB ERROR:", e); // keep this
+
+		// Unique violation (url dup)
+		if (e.code === "23505") {
+			return res.status(409).json({
+				message: "Duplicate value",
+				field: e.constraint, // e.g. job_ads_url_key
+				detail: e.detail, // shows which value duplicated
+			});
+		}
+
+		// Not-null violation
+		if (e.code === "23502") {
+			return res.status(400).json({
+				message: "Missing required field",
+				detail: e.detail,
+			});
+		}
+
+		return res.status(500).json({
+			message: "Internal server error",
+			detail: e.message,
+		});
 	}
 });
 
@@ -46,7 +76,7 @@ router.post("/", async (req: Request, res: Response) => {
 router.get("/", async (_req: Request, res: Response) => {
 	try {
 		const result = await pool.query(
-			"SELECT * FROM applications ORDER BY updated_at DESC"
+			"SELECT * FROM applications ORDER BY updated_at DESC",
 		);
 
 		if (result.rowCount === 0) return res.status(404).json("Not Found");
@@ -63,7 +93,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 		const { id } = req.params;
 		const result = await pool.query(
 			"SELECT * FROM applications WHERE id = $1 ORDER BY updated_at DESC",
-			[id]
+			[id],
 		);
 
 		if (result.rowCount === 0) return res.status(404).json("Not Found");
@@ -88,7 +118,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
 		]);
 
 		const entries = Object.entries(req.body).filter(
-			([key, value]) => allowedList.has(key) && value != undefined
+			([key, value]) => allowedList.has(key) && value != undefined,
 		);
 
 		if (entries.length === 0)
@@ -128,7 +158,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
 		const result = await pool.query(
 			"DELETE FROM applications WHERE id = $1 RETURNING *",
-			[id]
+			[id],
 		);
 
 		if (result.rowCount === 0) {
