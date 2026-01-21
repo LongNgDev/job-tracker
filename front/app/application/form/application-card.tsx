@@ -15,77 +15,183 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Dot, FileQuestionMark } from "lucide-react";
+import { Circle, Dot, FileQuestionMark } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Application } from "../application.types";
 import { JobAd } from "@/app/jobs/job-ads.types";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ApplicationTimeline } from "../application-timeline.types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
+type ApplicationStatus =
+  | "created"
+  | "applied"
+  | "screening"
+  | "interview"
+  | "final_interview"
+  | "offer";
+
+/* Helper */
+
+// Update application id to job_ads
+async function updateApplicationId(id: string, job_id: string) {
+  try {
+    const res = await fetch(
+      `http://localhost:4000/api/job_ads/${job_id}/application`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ application_id: id }),
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    return data.id;
+  } catch (e) {
+    console.error(`Error: ${e}`);
+  }
+}
+
+// Create application
+
+const createApplictaion = async (job_id: string) => {
+  try {
+    const res = await fetch(`http://localhost:4000/api/application/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "created",
+        stage: "initial",
+        last_follow_up_at: "",
+        next_follow_up_at: "",
+        applied_at: "",
+        note: "",
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    updateApplicationId(data.id, job_id);
+
+    return data.id;
+  } catch (e) {
+    console.error(`Error: ${e}`);
+  }
+};
+
+async function fetchApplicationHelper(id: string) {
+  try {
+    const res = await fetch(`http://localhost:4000/api/application/${id}`);
+
+    if (!res.ok) {
+      console.error("Fetched failed!");
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (e) {
+    console.error("Error: ", e);
+  }
+}
+
+async function fetchTimelineHelper(id: string) {
+  try {
+    const res = await fetch(
+      `http://localhost:4000/api/application/${id}/timeline`,
+    );
+
+    if (!res.ok) {
+      console.error("Fetched failed!");
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (e) {
+    console.error("Error: ", e);
+  }
+}
+
+/* Main */
 function ApplicationCard({ job }: { job: JobAd }) {
-  const [id, setID] = useState<string>();
   const [application, setApplication] = useState<Application>();
   const [timeline, setTimeline] = useState<ApplicationTimeline[]>();
+  const [id, setId] = useState(job.application_id);
 
-  useEffect(() => {
-    if (!job.application_id) return;
-
-    setID(job.application_id);
-  }, [job.application_id]);
-
+  // Fetch App + timeline
   useEffect(() => {
     if (!id) return;
 
     try {
-      const fetchApplication = async () => {
-        const res = await fetch(`http://localhost:4000/api/application/${id}`);
+      const fetch = async () => {
+        const applicationResult = await fetchApplicationHelper(id);
+        setApplication(applicationResult);
 
-        if (!res.ok) {
-          console.error("Fetched failed!");
-        }
-
-        const data = await res.json();
-        setApplication(data);
-        console.log(data);
+        const timelineResult = await fetchTimelineHelper(id);
+        setTimeline(timelineResult);
       };
-      fetchApplication();
+
+      fetch();
     } catch (e) {
       console.error("Error: ", e);
     }
   }, [id]);
 
-  useEffect(() => {
+  /* Status */
+  const STATUS_ORDER: ApplicationStatus[] = [
+    "created",
+    "applied",
+    "screening",
+    "interview",
+    "final_interview",
+    "offer",
+  ];
+
+  // Filter out the default "created"
+  const VISIBLE_STATUSES = STATUS_ORDER.filter((s) => s !== "created");
+
+  // Match the current index with the status
+  const currentIndex = application
+    ? STATUS_ORDER.indexOf(application.status as ApplicationStatus)
+    : -1;
+
+  // Disable all the status already passed
+  const isDisabled = (status: ApplicationStatus) =>
+    STATUS_ORDER.indexOf(status) <= currentIndex;
+
+  const createTimeline = async (status: string) => {
     if (!id) return;
 
-    try {
-      const fetchApplicationTimeline = async () => {
-        const res = await fetch(
-          `http://localhost:4000/api/application/${id}/timeline`,
-        );
-
-        if (!res.ok) {
-          console.error("Fetched failed!");
-        }
-
-        const data = await res.json();
-        setTimeline(data);
-        console.log(data);
-      };
-      fetchApplicationTimeline();
-    } catch (e) {
-      console.error("Error: ", e);
-    }
-  }, [id]);
-
-  const updateApplicationId = async (id: string) => {
     try {
       const res = await fetch(
-        `http://localhost:4000/api/job_ads/${job.id}/application`,
+        `http://localhost:4000/api/application/${id}/timeline`,
         {
-          method: "PATCH",
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ application_id: id }),
+          body: JSON.stringify({
+            event_type: "system",
+            title: status,
+          }),
         },
       );
 
@@ -95,39 +201,9 @@ function ApplicationCard({ job }: { job: JobAd }) {
       }
 
       const data = await res.json();
-      console.log("Updated!", id);
 
-      setID(id);
-
-      return data;
-    } catch (e) {
-      console.error(`Error: ${e}`);
-    }
-  };
-
-  const createApplictaion = async () => {
-    try {
-      const res = await fetch(`http://localhost:4000/api/application/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "created",
-          stage: "initial",
-          last_follow_up_at: "",
-          next_follow_up_at: "",
-          applied_at: "",
-          note: "",
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => null);
-        throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      updateApplicationId(data.id);
+      const timeline = await fetchTimelineHelper(id);
+      setTimeline(timeline);
 
       return data;
     } catch (e) {
@@ -190,14 +266,17 @@ function ApplicationCard({ job }: { job: JobAd }) {
           <div className="flex flex-col gap-4">
             <CardTitle>Application Timeline</CardTitle>
             <CardContent>
-              <ol className="relative space-y-4">
+              <ol className="relative max-h-100 space-y-4 overflow-auto">
                 {timeline ? (
                   <>
-                    {timeline.map((e) => (
-                      <li className="group relative flex pl-4" key={e.id}>
-                        <Dot className="absolute top-0 left-0 -translate-x-1/2 scale-150 group-first:text-green-500" />
+                    {[...timeline].reverse().map((e) => (
+                      <li className="group relative flex" key={e.id}>
+                        <Circle
+                          className="fill-muted-foreground mt-1 group-first:fill-green-500 group-first:text-green-500"
+                          size={14}
+                        />
 
-                        <div>
+                        <div className="px-2">
                           <CardDescription className="p-0.5">
                             {new Date(e.created_at).toLocaleDateString(
                               "en-AU",
@@ -205,12 +284,21 @@ function ApplicationCard({ job }: { job: JobAd }) {
                                 day: "2-digit",
                                 month: "long",
                                 year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hourCycle: "h24",
                               },
                             )}
                           </CardDescription>
 
                           <div className="p-2">
-                            <CardTitle className="text-base font-semibold">
+                            <Badge
+                              variant={"outline"}
+                              className="bg-muted text-[10px] font-bold tracking-wide uppercase"
+                            >
+                              {e.event_type}
+                            </Badge>
+                            <CardTitle className="text-base font-semibold capitalize">
                               {e.title}
                             </CardTitle>
                             <CardDescription>{e.description}</CardDescription>
@@ -222,11 +310,10 @@ function ApplicationCard({ job }: { job: JobAd }) {
                 ) : (
                   <></>
                 )}
-
-                <Separator
-                  className="bg-muted-foreground/60 absolute top-0 left-0 -translate-x-1/2"
+                {/* <Separator
+                  className="bg-muted-foreground/60 absolute top-0 left-0 h-full -translate-x-1/2"
                   orientation="vertical"
-                />
+                /> */}
               </ol>
             </CardContent>
           </div>
@@ -248,7 +335,31 @@ function ApplicationCard({ job }: { job: JobAd }) {
             </div>
             <Separator />
             <div className="flex justify-end gap-2 p-2">
-              <Button variant={"default"}>Advance</Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant={"default"}>Advance</Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side={"top"}>
+                  <DropdownMenuItem>Add note</DropdownMenuItem>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        {VISIBLE_STATUSES.map((status) => (
+                          <DropdownMenuItem
+                            key={status}
+                            disabled={isDisabled(status)}
+                            onClick={() => createTimeline(status)}
+                            className="capitalize"
+                          >
+                            {status.replace("_", " ")}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button variant={"destructive"}>Rejected</Button>
             </div>
           </div>
@@ -268,10 +379,10 @@ function ApplicationCard({ job }: { job: JobAd }) {
             <EmptyContent>
               <div>
                 <Button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.preventDefault();
-                    createApplictaion();
-                    // console.log("Create application");
+                    const res = await createApplictaion(job.id);
+                    setId(res);
                   }}
                 >
                   Create Application

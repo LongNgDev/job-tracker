@@ -93,7 +93,7 @@ router.post("/:id/timeline", async (req: Request, res: Response) => {
 		const { event_type, title, description } = parsed.data;
 
 		const result = await pool.query(
-			"INSERT INTO application_timeline (application_id, event_type, title, description) values ($1,$2,$3,$4)",
+			"INSERT INTO application_timeline (application_id, event_type, title, description) values ($1,$2,$3,$4) RETURNING *",
 			[id, event_type, title, description],
 		);
 
