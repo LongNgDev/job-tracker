@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RecruiterSection from "@/app/recruiter/form/recruiter-card";
 
-import ApplicationCard from "@/app/application/form/application-card";
+import ApplicationCard from "@/app/application/cards/application-card";
+import FileCard from "@/app/file/file-card";
 
 function ViewJob() {
   const { id } = useParams<{ id: string }>();
@@ -154,6 +155,10 @@ function ViewJob() {
                       />
                     </CardContent>
                   </Card>
+                </TabsContent>
+
+                <TabsContent value="files">
+                  <FileCard />
                 </TabsContent>
               </Tabs>
               <RecruiterSection recruiter_id={job?.recruiter_id} job_id={id} />

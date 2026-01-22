@@ -19,13 +19,8 @@ router.post("/", async (req: Request, res: Response) => {
 		// Function to initialise the timeline for the application
 		const initTimeline = async (applicationId: string) => {
 			const res = await pool.query(
-				"INSERT INTO application_timeline (application_id, event_type, title, description) VALUES ($1,$2,$3,$4)",
-				[
-					applicationId,
-					"system",
-					"Application Created",
-					"Application was created",
-				],
+				"INSERT INTO application_timeline (application_id, event_type, title) VALUES ($1,$2,$3)",
+				[applicationId, "system", "Application Created"],
 			);
 			return res.rows[0];
 		};

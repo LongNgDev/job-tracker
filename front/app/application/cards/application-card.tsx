@@ -15,7 +15,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Circle, Dot, FileQuestionMark } from "lucide-react";
+import { Circle, FileQuestionMark } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Application } from "../application.types";
 import { JobAd } from "@/app/jobs/job-ads.types";
@@ -211,6 +211,35 @@ function ApplicationCard({ job }: { job: JobAd }) {
     }
   };
 
+  const updateStatusApplication = async (status: string) => {
+    if (!id) return;
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/application/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: status,
+          stage: "applying",
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      createTimeline(status);
+      setApplication(data);
+
+      return data;
+    } catch (e) {
+      console.error(`Error: ${e}`);
+    }
+  };
+
   return (
     <Card className="h-full">
       {application ? (
@@ -226,7 +255,7 @@ function ApplicationCard({ job }: { job: JobAd }) {
                 </CardDescription>
               </div>
             </div>
-            <div className="flex grow flex-col items-center not-last:border-r">
+            {/*  <div className="flex grow flex-col items-center not-last:border-r">
               <div className="bg-muted flex w-full justify-center border-b p-2">
                 <CardTitle>Next Step</CardTitle>
               </div>
@@ -235,7 +264,7 @@ function ApplicationCard({ job }: { job: JobAd }) {
                   {application.stage}
                 </CardDescription>
               </div>
-            </div>
+            </div> */}
             <div className="flex grow flex-col items-center not-last:border-r">
               <div className="bg-muted flex w-full justify-center border-b p-2">
                 <CardTitle>Match</CardTitle>
@@ -265,57 +294,59 @@ function ApplicationCard({ job }: { job: JobAd }) {
           </div>
           <div className="flex flex-col gap-4">
             <CardTitle>Application Timeline</CardTitle>
-            <CardContent>
-              <ol className="relative max-h-100 space-y-4 overflow-auto">
-                {timeline ? (
-                  <>
-                    {[...timeline].reverse().map((e) => (
-                      <li className="group relative flex" key={e.id}>
-                        <Circle
-                          className="fill-muted-foreground mt-1 group-first:fill-green-500 group-first:text-green-500"
-                          size={14}
-                        />
+            <Card>
+              <CardContent>
+                <ol className="relative max-h-100 space-y-4 overflow-auto">
+                  {timeline ? (
+                    <>
+                      {[...timeline].reverse().map((e) => (
+                        <li className="group relative flex" key={e.id}>
+                          <Circle
+                            className="fill-muted-foreground mt-1 group-first:fill-green-500 group-first:text-green-500"
+                            size={14}
+                          />
 
-                        <div className="px-2">
-                          <CardDescription className="p-0.5">
-                            {new Date(e.created_at).toLocaleDateString(
-                              "en-AU",
-                              {
-                                day: "2-digit",
-                                month: "long",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hourCycle: "h24",
-                              },
-                            )}
-                          </CardDescription>
+                          <div className="px-2">
+                            <CardDescription className="p-0.5">
+                              {new Date(e.created_at).toLocaleDateString(
+                                "en-AU",
+                                {
+                                  day: "2-digit",
+                                  month: "long",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hourCycle: "h24",
+                                },
+                              )}
+                            </CardDescription>
 
-                          <div className="p-2">
-                            <Badge
-                              variant={"outline"}
-                              className="bg-muted text-[10px] font-bold tracking-wide uppercase"
-                            >
-                              {e.event_type}
-                            </Badge>
-                            <CardTitle className="text-base font-semibold capitalize">
-                              {e.title}
-                            </CardTitle>
-                            <CardDescription>{e.description}</CardDescription>
+                            <div className="p-2">
+                              <Badge
+                                variant={"outline"}
+                                className="bg-muted text-[10px] font-bold tracking-wide uppercase"
+                              >
+                                {e.event_type}
+                              </Badge>
+                              <CardTitle className="text-base font-semibold capitalize">
+                                {e.title}
+                              </CardTitle>
+                              <CardDescription>{e.description}</CardDescription>
+                            </div>
                           </div>
-                        </div>
-                      </li>
-                    ))}
-                  </>
-                ) : (
-                  <></>
-                )}
-                {/* <Separator
+                        </li>
+                      ))}
+                    </>
+                  ) : (
+                    <></>
+                  )}
+                  {/* <Separator
                   className="bg-muted-foreground/60 absolute top-0 left-0 h-full -translate-x-1/2"
                   orientation="vertical"
                 /> */}
-              </ol>
-            </CardContent>
+                </ol>
+              </CardContent>
+            </Card>
           </div>
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap gap-2">
@@ -339,6 +370,8 @@ function ApplicationCard({ job }: { job: JobAd }) {
                 <DropdownMenuTrigger asChild>
                   <Button variant={"default"}>Advance</Button>
                 </DropdownMenuTrigger>
+
+                {application.status == "offer" && <Button>Accept</Button>}
                 <DropdownMenuContent side={"top"}>
                   <DropdownMenuItem>Add note</DropdownMenuItem>
                   <DropdownMenuSub>
@@ -349,7 +382,7 @@ function ApplicationCard({ job }: { job: JobAd }) {
                           <DropdownMenuItem
                             key={status}
                             disabled={isDisabled(status)}
-                            onClick={() => createTimeline(status)}
+                            onClick={() => updateStatusApplication(status)}
                             className="capitalize"
                           >
                             {status.replace("_", " ")}
