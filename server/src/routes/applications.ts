@@ -2,6 +2,8 @@ import { Router, type Request, type Response } from "express";
 import { pool } from "../database/db.js";
 import { createApplicationSchema } from "../schema/application.js";
 import { createApplicationTimelineSchema } from "../schema/application-timeline.js";
+import { createFileSchema } from "../schema/file.js";
+import { uploadSingle } from "./middleware/uploadFile.js";
 
 const router: Router = Router();
 
@@ -119,6 +121,74 @@ router.post("/:id/timeline", async (req: Request, res: Response) => {
 		});
 	}
 });
+
+router.post(
+	"/:id/file/upload",
+	uploadSingle,
+	async (req: Request, res: Response) => {
+		try {
+			const { id } = req.params;
+
+			if (!req.file)
+				return res.status(400).json({ message: "file is required" });
+
+			const parsed = createFileSchema.safeParse(req.body);
+
+			if (!parsed.success) {
+				console.error(parsed.error);
+				return res.status(400).json({ error: parsed.error });
+			}
+
+			const file_name = req.file.originalname;
+			const mime_type = req.file.mimetype;
+			const size_bytes = req.file.size;
+			const storage_key = req.file.filename;
+			const file_type =
+				mime_type === "application/pdf"
+					? "pdf"
+					: mime_type.startsWith("image/")
+						? "image"
+						: mime_type === "application/msword" ||
+							  mime_type ===
+									"application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+							? "doc"
+							: "other";
+
+			const { source } = parsed.data;
+
+			const result = await pool.query(
+				"INSERT INTO files (application_id, file_name, file_type, mime_type, size_bytes, source, storage_key) values ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+				[id, file_name, file_type, mime_type, size_bytes, source, storage_key],
+			);
+
+			return res.status(201).json(result.rows[0]);
+		} catch (e: any) {
+			console.error("DB ERROR:", e); // keep this
+
+			// Unique violation (url dup)
+			if (e.code === "23505") {
+				return res.status(409).json({
+					message: "Duplicate value",
+					field: e.constraint, // e.g. job_ads_url_key
+					detail: e.detail, // shows which value duplicated
+				});
+			}
+
+			// Not-null violation
+			if (e.code === "23502") {
+				return res.status(400).json({
+					message: "Missing required field",
+					detail: e.detail,
+				});
+			}
+
+			return res.status(500).json({
+				message: "Internal server error",
+				detail: e.message,
+			});
+		}
+	},
+);
 
 // RETRIEVE
 // Retrieve all

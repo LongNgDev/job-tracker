@@ -56,6 +56,18 @@ export const initDB = async () => {
 				updated_at timestamptz NOT NULL DEFAULT now()
 			);
 
+			CREATE TABLE IF NOT EXISTS public.files (
+				id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+				application_id uuid REFERENCES public.applications(id) ON DELETE CASCADE,
+				file_name text NOT NULL,
+				file_type text NOT NULL,
+				mime_type text NOT NULL,
+				size_bytes bigint NOT NULL,
+				storage_key text NOT NULL,
+				source text NOT NULL,
+				created_at timestamptz NOT NULL DEFAULT now()
+			);
+
 			CREATE TABLE IF NOT EXISTS public.application_timeline (
 				id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 				application_id uuid NOT NULL REFERENCES public.applications(id) ON DELETE CASCADE,

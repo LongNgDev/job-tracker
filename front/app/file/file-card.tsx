@@ -34,10 +34,30 @@ function FileCard() {
     console.log("Picked file:", selected);
   };
 
-  const onUpload = () => {
+  const onUpload = async () => {
     if (!file) return;
     console.log("Ready to upload:", file.name, file.size, file.type);
     // later → FormData + fetch
+
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("source", "manual");
+
+    try {
+      const res = await fetch(
+        `http://localhost:4000/api/application/c225526f-2b95-4016-ad09-d9c07f00c74d/file/upload`,
+        {
+          method: "POST",
+          body: fd,
+        },
+      );
+
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      console.log("Uploaded:", data);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
