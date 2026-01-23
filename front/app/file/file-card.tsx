@@ -82,6 +82,7 @@ function FileCard({ id }: { id?: string }) {
         if (!res.ok) throw new Error("Fetched failed!");
 
         const data = await res.json();
+        console.log(data[0].id);
         setFileCol(data);
       } catch (e) {
         console.error(e);

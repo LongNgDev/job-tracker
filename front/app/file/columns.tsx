@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 
 type FileStorage = {
   id: string;
@@ -70,6 +71,13 @@ export const columns = ({}): ColumnDef<FileStorage>[] => [
 
       const [open, setOpen] = useState(false);
 
+      const downloadFile = () => {
+        window.open(
+          `http://localhost:4000/api/file/${file.id}/download`,
+          "_blank",
+        );
+      };
+
       return (
         <>
           <DropdownMenu>
@@ -84,7 +92,9 @@ export const columns = ({}): ColumnDef<FileStorage>[] => [
                 View
               </DropdownMenuItem>
               {/* <DropdownMenuItem>Edit</DropdownMenuItem> */}
-              <DropdownMenuItem>Download</DropdownMenuItem>
+              <DropdownMenuItem onSelect={downloadFile}>
+                Download
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="font-semibold text-red-600 focus:text-red-500">
                 Delete
@@ -93,11 +103,38 @@ export const columns = ({}): ColumnDef<FileStorage>[] => [
           </DropdownMenu>
 
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent>
+            <DialogContent className="flex h-[80vh] min-w-4xl flex-col">
               <DialogHeader>
                 <DialogTitle>{file.file_name}</DialogTitle>
-                <DialogDescription></DialogDescription>
+                <DialogDescription>
+                  {file.file_type === "doc"
+                    ? "This file type can’t be previewed here. Please download to view it."
+                    : "Preview"}
+                </DialogDescription>
               </DialogHeader>
+              {file.file_type === "doc" ? (
+                <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-md border p-6">
+                  <p className="text-muted-foreground text-center text-sm">
+                    DOC/DOCX preview isn&apos;t supported yet.
+                  </p>
+
+                  <Button
+                    onClick={() =>
+                      window.open(
+                        `http://localhost:4000/api/file/${file.id}/download`,
+                        "_blank",
+                      )
+                    }
+                  >
+                    Download
+                  </Button>
+                </div>
+              ) : (
+                <iframe
+                  src={`http://localhost:4000/api/file/${file.id}/view`}
+                  className="w-full grow rounded-md border"
+                />
+              )}
             </DialogContent>
           </Dialog>
         </>
