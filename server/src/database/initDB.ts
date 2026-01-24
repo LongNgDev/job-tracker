@@ -18,9 +18,9 @@ export const initDB = async () => {
 
 		// Handle all the missing tables
 		console.log("Building database ...");
+
+		await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
 		await pool.query(`
-			CREATE EXTENSION IF NOT EXISTS pgcrypto;
-			
 			BEGIN;
 
 			CREATE TABLE IF  NOT EXISTS public.users (
@@ -39,6 +39,27 @@ export const initDB = async () => {
 				email varchar(255) UNIQUE,
 				phone varchar(50),
 				location varchar(255),
+				note text,
+				created_at timestamptz NOT NULL DEFAULT now(),
+				updated_at timestamptz NOT NULL DEFAULT now()
+			);
+
+			CREATE TABLE IF NOT EXISTS public.job_ads (
+				id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+				recruiter_id uuid REFERENCES public.recruiters(id),
+				company_name varchar(255) NOT NULL,
+				job_title varchar(255) NOT NULL,
+				job_description text NOT NULL,
+				published_at date NOT NULL,
+				location varchar(255),
+				job_type varchar(50) NOT NULL,
+				source varchar(50) NOT NULL,
+				url text UNIQUE,
+				skill_requirements varchar(255)[],
+				tech_stack varchar(255)[],
+				expired_at date,
+				salary_min integer,
+				salary_max integer,
 				note text,
 				created_at timestamptz NOT NULL DEFAULT now(),
 				updated_at timestamptz NOT NULL DEFAULT now()
@@ -77,29 +98,6 @@ export const initDB = async () => {
 				description text,
 				created_at timestamptz NOT NULL DEFAULT now()
 			);
-
-			CREATE TABLE IF NOT EXISTS public.job_ads (
-				id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-				recruiter_id uuid REFERENCES public.recruiters(id),
-				application_id uuid REFERENCES public.applications(id) ON DELETE CASCADE,
-				company_name varchar(255) NOT NULL,
-				job_title varchar(255) NOT NULL,
-				job_description text NOT NULL,
-				published_at date NOT NULL,
-				location varchar(255),
-				job_type varchar(50) NOT NULL,
-				source varchar(50) NOT NULL,
-				url text UNIQUE,
-				skill_requirements varchar(255)[],
-				tech_stack varchar(255)[],
-				expired_at date,
-				salary_min integer,
-				salary_max integer,
-				note text,
-				created_at timestamptz NOT NULL DEFAULT now(),
-				updated_at timestamptz NOT NULL DEFAULT now()
-			);
-
 
 			COMMIT;
 	  `);
