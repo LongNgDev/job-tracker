@@ -8,25 +8,38 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useParams } from "next/navigation";
-import { useState } from "react";
 import { JobAd } from "../../job-ads.types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import RecruiterSection from "@/app/recruiter/form/recruiter-card";
 
+import { Application } from "@/app/application/application.types";
+import { ApplicationTimeline } from "@/app/application/application-timeline.types";
+
+import RecruiterSection from "@/app/recruiter/form/recruiter-card";
 import ApplicationCard from "@/app/application/cards/application-card";
 import FileCard from "@/app/file/file-card";
 import useFetch from "@/hooks/useFetch";
 
 function ViewJob() {
   const { id } = useParams<{ id: string }>();
-  const [applicationId, setApplicationId] = useState<string | undefined>(
-    undefined,
-  );
 
   const { data: job } = useFetch<JobAd>(
     `http://localhost:4000/api/job_ads/${id}`,
   );
+
+  const appUrl = job?.application_id
+    ? `http://localhost:4000/api/application/${job.application_id}`
+    : undefined;
+
+  const {
+    data: application,
+    refetch: refetchApp,
+    setData: setApplication,
+  } = useFetch<Application>(appUrl);
+
+  const { data: timeline, refetch: refetchTimeline } = useFetch<
+    ApplicationTimeline[]
+  >(appUrl ? `${appUrl}/timeline` : undefined);
 
   return (
     <Card className="shadow-2xl">
@@ -109,7 +122,11 @@ function ViewJob() {
                 <TabsContent value="application">
                   <ApplicationCard
                     job={job}
-                    onApplicationCreated={setApplicationId}
+                    application={application}
+                    refetchApp={refetchApp}
+                    setApplication={setApplication}
+                    timeline={timeline}
+                    refetchTimeline={refetchTimeline}
                   />
                 </TabsContent>
 
@@ -127,7 +144,7 @@ function ViewJob() {
                 </TabsContent>
 
                 <TabsContent value="files">
-                  <FileCard id={applicationId} />
+                  <FileCard id={job.application_id} />
                 </TabsContent>
               </Tabs>
               <RecruiterSection recruiter_id={job?.recruiter_id} job_id={id} />

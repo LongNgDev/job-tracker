@@ -100,69 +100,27 @@ const createApplictaion = async (job_id: string) => {
   }
 };
 
-async function fetchApplicationHelper(id: string) {
-  try {
-    const res = await fetch(`http://localhost:4000/api/application/${id}`);
-
-    if (!res.ok) {
-      console.error("Fetched failed!");
-    }
-
-    const data = await res.json();
-    return data;
-  } catch (e) {
-    console.error("Error: ", e);
-  }
-}
-
-async function fetchTimelineHelper(id: string) {
-  try {
-    const res = await fetch(
-      `http://localhost:4000/api/application/${id}/timeline`,
-    );
-
-    if (!res.ok) {
-      console.error("Fetched failed!");
-    }
-
-    const data = await res.json();
-    return data;
-  } catch (e) {
-    console.error("Error: ", e);
-  }
-}
-
 /* Main */
 function ApplicationCard({
   job,
-  onApplicationCreated,
+  application,
+  refetchApp,
+  setApplication,
+  timeline,
+  refetchTimeline,
 }: {
   job: JobAd;
-  onApplicationCreated: (id: string) => void;
+  application: Application | null;
+  refetchApp: () => void;
+  setApplication: (data: Application) => void;
+  timeline: ApplicationTimeline[] | null;
+  refetchTimeline: () => void;
 }) {
-  const [application, setApplication] = useState<Application>();
-  const [timeline, setTimeline] = useState<ApplicationTimeline[]>();
   const [id, setId] = useState(job.application_id);
 
-  // Fetch App + timeline
   useEffect(() => {
-    if (!id) return;
-
-    try {
-      const fetch = async () => {
-        const applicationResult = await fetchApplicationHelper(id);
-        setApplication(applicationResult);
-        onApplicationCreated(applicationResult.id);
-
-        const timelineResult = await fetchTimelineHelper(id);
-        setTimeline(timelineResult);
-      };
-
-      fetch();
-    } catch (e) {
-      console.error("Error: ", e);
-    }
-  }, [id, onApplicationCreated]);
+    setId(job.application_id);
+  }, [job.application_id]);
 
   /* Status */
   const STATUS_ORDER: ApplicationStatus[] = [
@@ -209,8 +167,7 @@ function ApplicationCard({
 
       const data = await res.json();
 
-      const timeline = await fetchTimelineHelper(id);
-      setTimeline(timeline);
+      await refetchTimeline();
 
       return data;
     } catch (e) {
@@ -236,12 +193,15 @@ function ApplicationCard({
         throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
       }
 
-      const data = await res.json();
+      const updated = await res.json();
 
-      createTimeline(status);
-      setApplication(data);
+      setApplication(updated);
 
-      return data;
+      await createTimeline(status);
+
+      await refetchApp();
+
+      return updated;
     } catch (e) {
       console.error(`Error: ${e}`);
     }
@@ -347,10 +307,6 @@ function ApplicationCard({
                   ) : (
                     <></>
                   )}
-                  {/* <Separator
-                  className="bg-muted-foreground/60 absolute top-0 left-0 h-full -translate-x-1/2"
-                  orientation="vertical"
-                /> */}
                 </ol>
               </CardContent>
             </Card>
