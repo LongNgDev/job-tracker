@@ -27,7 +27,12 @@ function useFetch<T>(url: string | undefined) {
   }, [url]);
 
   useEffect(() => {
-    if (!url) return;
+    if (!url) {
+      setData(null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     refetch();
   }, [url, refetch]);
 

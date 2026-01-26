@@ -57,73 +57,23 @@ const formSchema = z.object({
 });
 
 function RecruiterCard({
-  recruiter_id,
   job_id,
+  recruiter,
+  refetchJob,
 }: {
-  recruiter_id: string | undefined;
   job_id: string;
+  recruiter: Recruiter | null;
+  refetchJob: () => void;
 }) {
-  const [recruiter, setRecruiter] = useState<Recruiter>();
-  const [id, setID] = useState(recruiter_id);
+  const [formOpen, setFormOpen] = useState(false);
 
-  useEffect(() => {
-    setID(recruiter_id);
-  }, [recruiter_id]);
-
-  useEffect(() => {
-    if (!id) return;
-
-    try {
-      const fetchRecruiter = async () => {
-        const res = await fetch(`http://localhost:4000/api/recruiter/${id}`);
-
-        if (!res.ok) {
-          throw new Error("Fetched failed!");
-        }
-
-        const data_recruiter = await res.json();
-        setRecruiter(data_recruiter);
-      };
-      fetchRecruiter();
-    } catch (e) {
-      console.error("Error: ", e);
-    }
-  }, [id]);
-
-  const updateRecruiterId = async (id: string) => {
-    try {
-      const res = await fetch(
-        `http://localhost:4000/api/job_ads/${job_id}/recruiter`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ recruiter_id: id }),
-        },
-      );
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => null);
-        throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-      console.log("Updated!", id);
-
-      setID(id);
-
-      return data;
-    } catch (e) {
-      console.error(`Error: ${e}`);
-    }
-  };
-
-  const detachRecruiter = async () => {
+  const updateRecruiterId = async (recruiterId: string | null) => {
     const res = await fetch(
       `http://localhost:4000/api/job_ads/${job_id}/recruiter`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recruiter_id: null }),
+        body: JSON.stringify({ recruiter_id: recruiterId }),
       },
     );
 
@@ -132,9 +82,13 @@ function RecruiterCard({
       throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
     }
 
-    setID(undefined);
-    setRecruiter(undefined);
-    return;
+    await res.json();
+
+    await refetchJob();
+  };
+
+  const detachRecruiter = async () => {
+    await updateRecruiterId(null);
   };
 
   async function createRecruiter(values: z.infer<typeof formSchema>) {
@@ -149,11 +103,11 @@ function RecruiterCard({
       throw new Error(err?.detail || err?.message || `HTTP ${res.status}`);
     }
 
-    const data = await res.json();
+    const recruiter = await res.json();
 
-    updateRecruiterId(data.id);
+    await updateRecruiterId(recruiter.id);
 
-    return data;
+    return recruiter;
   }
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -234,7 +188,7 @@ function RecruiterCard({
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <Dialog>
+                <Dialog open={formOpen} onOpenChange={setFormOpen}>
                   <DialogTrigger asChild>
                     <Button>Add Recruiter</Button>
                   </DialogTrigger>
@@ -245,7 +199,10 @@ function RecruiterCard({
                       </DialogTitle>
                     </DialogHeader>
                     <DialogDescription></DialogDescription>
-                    <RecruiterForm onSubmit={onSubmit} />
+                    <RecruiterForm
+                      onSubmit={onSubmit}
+                      onSuccess={() => setFormOpen(false)}
+                    />
                   </DialogContent>
                 </Dialog>
               </EmptyContent>

@@ -19,16 +19,21 @@ import RecruiterSection from "@/app/recruiter/form/recruiter-card";
 import ApplicationCard from "@/app/application/cards/application-card";
 import FileCard from "@/app/file/file-card";
 import useFetch from "@/hooks/useFetch";
+import { Recruiter } from "@/app/recruiter/recruiter.types";
 
 function ViewJob() {
   const { id } = useParams<{ id: string }>();
 
-  const { data: job } = useFetch<JobAd>(
+  const { data: job, refetch: refetchJob } = useFetch<JobAd>(
     `http://localhost:4000/api/job_ads/${id}`,
   );
 
   const appUrl = job?.application_id
     ? `http://localhost:4000/api/application/${job.application_id}`
+    : undefined;
+
+  const recUrl = job?.recruiter_id
+    ? `http://localhost:4000/api/recruiter/${job.recruiter_id}`
     : undefined;
 
   const {
@@ -40,6 +45,8 @@ function ViewJob() {
   const { data: timeline, refetch: refetchTimeline } = useFetch<
     ApplicationTimeline[]
   >(appUrl ? `${appUrl}/timeline` : undefined);
+
+  const { data: recruiter } = useFetch<Recruiter>(recUrl);
 
   return (
     <Card className="shadow-2xl">
@@ -147,7 +154,11 @@ function ViewJob() {
                   <FileCard id={job.application_id} />
                 </TabsContent>
               </Tabs>
-              <RecruiterSection recruiter_id={job?.recruiter_id} job_id={id} />
+              <RecruiterSection
+                job_id={id}
+                recruiter={recruiter}
+                refetchJob={refetchJob}
+              />
             </div>
           </CardContent>
         </>

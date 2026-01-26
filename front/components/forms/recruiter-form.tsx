@@ -15,6 +15,7 @@ import {
 } from "../ui/form";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
+import { useState } from "react";
 
 const formSchema = z.object({
   name: z.string().min(2).max(50),
@@ -35,6 +36,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 function RecruiterForm({
   onSubmit,
+  onSuccess,
 }: {
   onSubmit: (values: {
     name: string;
@@ -46,6 +48,7 @@ function RecruiterForm({
     location?: string | undefined;
     note?: string | undefined;
   }) => void;
+  onSuccess: () => void;
 }) {
   // 1. Define a form
   const form = useForm({
@@ -66,7 +69,10 @@ function RecruiterForm({
     <Form {...form}>
       <form
         className="row-auto grid grid-cols-2 gap-6"
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(async (values) => {
+          await onSubmit(values);
+          onSuccess();
+        })}
       >
         {/* Recruiter Name */}
         <FormField
