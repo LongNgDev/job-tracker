@@ -20,6 +20,7 @@ import ApplicationCard from "@/app/application/cards/application-card";
 import FileCard from "@/app/file/file-card";
 import useFetch from "@/hooks/useFetch";
 import { Recruiter } from "@/app/recruiter/recruiter.types";
+import { FileType } from "@/app/file/file.types";
 
 function ViewJob() {
   const { id } = useParams<{ id: string }>();
@@ -36,20 +37,27 @@ function ViewJob() {
     ? `http://localhost:4000/api/recruiter/${job.recruiter_id}`
     : undefined;
 
+  const { data: recruiter } = useFetch<Recruiter>(recUrl);
+
   const {
     data: application,
     refetch: refetchApp,
     setData: setApplication,
   } = useFetch<Application>(appUrl);
 
-  const timeUrl = application
+  // Urls base on Application ID
+  const timeUrl = application?.id
     ? `http://localhost:4000/api/application/${application.id}/timeline`
     : undefined;
 
   const { data: timeline, refetch: refetchTimeline } =
     useFetch<ApplicationTimeline[]>(timeUrl);
 
-  const { data: recruiter } = useFetch<Recruiter>(recUrl);
+  const fileUrl = application?.id
+    ? `http://localhost:4000/api/application/${application.id}/file`
+    : undefined;
+
+  const { data: files, refetch: refetchFiles } = useFetch<FileType[]>(fileUrl);
 
   return (
     <Card className="shadow-2xl">
@@ -125,7 +133,9 @@ function ViewJob() {
                   {/* <TabsTrigger value="overview">Overview</TabsTrigger> */}
                   <TabsTrigger value="application">Application</TabsTrigger>
                   <TabsTrigger value="description">Description</TabsTrigger>
-                  <TabsTrigger value="files">Files</TabsTrigger>
+                  <TabsTrigger value="files" disabled={!files}>
+                    Files
+                  </TabsTrigger>
                 </TabsList>
 
                 {/* Content for Application */}
@@ -154,7 +164,11 @@ function ViewJob() {
                 </TabsContent>
 
                 <TabsContent value="files">
-                  <FileCard id={job.application_id} />
+                  <FileCard
+                    id={application?.id}
+                    fileCol={files}
+                    refetchFileCol={refetchFiles}
+                  />
                 </TabsContent>
               </Tabs>
               <RecruiterSection

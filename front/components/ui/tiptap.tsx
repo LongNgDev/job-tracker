@@ -16,7 +16,7 @@ const Tiptap = ({
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: "Paste job description here…",
+        placeholder: "",
       }),
     ],
     content: value || "",

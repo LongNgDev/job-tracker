@@ -40,9 +40,17 @@ async function fetchFileCol(id: string) {
   }
 }
 
-function FileCard({ id }: { id?: string }) {
+function FileCard({
+  id,
+  fileCol,
+  refetchFileCol,
+}: {
+  id?: string;
+  fileCol: FileType[] | null;
+  refetchFileCol: () => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
-  const [fileCol, setFileCol] = useState<FileType[]>([]);
+  // const [fileCol, refetchFileCol() useState<FileType[]>([]);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null;
@@ -57,6 +65,7 @@ function FileCard({ id }: { id?: string }) {
   };
 
   const onUpload = async () => {
+    if (!id) return;
     if (!file) return;
 
     const fd = new FormData();
@@ -74,22 +83,11 @@ function FileCard({ id }: { id?: string }) {
 
       if (!res.ok) throw new Error("Upload failed");
 
-      const fData = await fetchFileCol(id || "");
-      setFileCol(fData);
+      refetchFileCol();
     } catch (e) {
       console.error(e);
     }
   };
-
-  useEffect(() => {
-    if (!id) return;
-    const fetch = async () => {
-      const data = await fetchFileCol(id);
-      setFileCol(data);
-    };
-
-    fetch();
-  }, [id]);
 
   const onDelete = async (fileId: string) => {
     try {
@@ -99,8 +97,7 @@ function FileCard({ id }: { id?: string }) {
 
       if (!res.ok) throw new Error("Delete failed!");
 
-      const fData = await fetchFileCol(id || "");
-      setFileCol(fData);
+      refetchFileCol();
     } catch (e) {
       console.error("Error:", e);
     }
@@ -110,7 +107,7 @@ function FileCard({ id }: { id?: string }) {
     <Card>
       <CardHeader className="flex justify-end">
         <Dialog>
-          {fileCol.length >= 2 ? (
+          {fileCol && fileCol.length >= 2 ? (
             <div className="flex items-center justify-center gap-2">
               <DialogDescription className="text-destructive text-base">
                 File limit is reached! (2/2)
@@ -144,10 +141,14 @@ function FileCard({ id }: { id?: string }) {
         </Dialog>
       </CardHeader>
       <CardContent>
-        <DataTable
-          columns={columns({ onDelete: (id: string) => onDelete(id) })}
-          data={fileCol}
-        />
+        {fileCol ? (
+          <DataTable
+            columns={columns({ onDelete: (id: string) => onDelete(id) })}
+            data={fileCol}
+          />
+        ) : (
+          <></>
+        )}
       </CardContent>
     </Card>
   );

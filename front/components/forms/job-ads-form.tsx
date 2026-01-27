@@ -33,6 +33,7 @@ const formSchema = z
     expired_at: z.string().optional(),
     salary_min: z.coerce.number().positive().optional(),
     salary_max: z.coerce.number().positive().optional(),
+    note: z.string().optional(),
   })
   .refine(
     (d) => !d.salary_min || !d.salary_max || d.salary_min <= d.salary_max,
@@ -59,7 +60,7 @@ export function JobAdsForm() {
       job_title: "",
       job_description: "",
       published_at: new Date().toISOString().slice(0, 10), // or undefined if you want blank
-      location: undefined,
+      location: "",
       job_type: "",
       source: "",
       url: "",
@@ -68,6 +69,7 @@ export function JobAdsForm() {
       expired_at: undefined,
       salary_min: undefined,
       salary_max: undefined,
+      note: "",
     } satisfies Partial<FormValues>,
   });
 
@@ -477,6 +479,24 @@ export function JobAdsForm() {
                           e.target.value === "" ? undefined : e.target.value,
                         )
                       }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Job Description */}
+            <FormField
+              control={form.control}
+              name="note"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Note</FormLabel>
+                  <FormControl>
+                    <Tiptap
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
