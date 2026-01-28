@@ -107,20 +107,17 @@ function FileCard({
     <Card>
       <CardHeader className="flex justify-end">
         <Dialog>
-          {fileCol && fileCol.length >= 2 ? (
-            <div className="flex items-center justify-center gap-2">
-              <DialogDescription className="text-destructive text-base">
-                File limit is reached! (2/2)
-              </DialogDescription>
-              <DialogTrigger asChild>
-                <Button disabled>Upload</Button>
-              </DialogTrigger>
-            </div>
-          ) : (
+          <div className="flex items-center justify-center gap-2">
+            <DialogDescription className="text-base">
+              ({fileCol?.length}/5)
+            </DialogDescription>
             <DialogTrigger asChild>
-              <Button>Upload</Button>
+              <Button disabled={fileCol ? fileCol?.length >= 5 : false}>
+                Upload
+              </Button>
             </DialogTrigger>
-          )}
+          </div>
+
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Upload File</DialogTitle>
