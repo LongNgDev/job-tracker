@@ -225,10 +225,6 @@ router.post(
 // Retrieve all
 router.get("/", async (_req: Request, res: Response) => {
 	try {
-		const result = await pool.query(
-			"SELECT * FROM applications ORDER BY updated_at DESC",
-		);
-
 		const application = await prisma.applications.findMany({
 			orderBy: {
 				updated_at: "desc",
@@ -247,15 +243,23 @@ router.get("/", async (_req: Request, res: Response) => {
 router.get("/:id", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
+
+		if (!id) throw Error("Id not found");
+
 		const result = await pool.query(
 			"SELECT * FROM applications WHERE id = $1 ORDER BY updated_at DESC",
 			[id],
 		);
 
-		if (result.rowCount === 0) return res.status(404).json("Not Found");
+		const application = await prisma.applications.findUniqueOrThrow({
+			where: {
+				id,
+			},
+		});
 
-		return res.status(200).json(result.rows[0]);
+		return res.status(200).json(application);
 	} catch (e: any) {
+		if (e.code) return res.status(e.code).json(e.message);
 		return res.status(500).json(e.message);
 	}
 });
