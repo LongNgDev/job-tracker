@@ -120,7 +120,7 @@ router.post("/", async (req: Request, res: Response) => {
 // RETRIEVE:
 
 // Retrieve All
-router.get("/", async (_req: Request, res: Response) => {
+/* router.get("/", async (_req: Request, res: Response) => {
 	try {
 		const jobAds = await prisma.jobAd.findMany();
 
@@ -132,15 +132,19 @@ router.get("/", async (_req: Request, res: Response) => {
 		return res.status(500).json(e.message);
 	}
 });
+ */
 
-// Retrieve data for job_ads table
-router.get("/table", async (_req: Request, res: Response) => {
+router.get("/", async (_req: Request, res: Response) => {
 	try {
 		const jobAds = await prisma.jobAd.findMany({
 			orderBy: {
 				updated_at: "desc",
 			},
 		});
+
+		if (!jobAds) {
+			return res.status(404).json({ error: "Not found" });
+		}
 
 		return res.status(200).json(jobAds);
 	} catch (e: any) {
@@ -160,9 +164,35 @@ router.get("/:id", async (req: Request, res: Response) => {
 			},
 		});
 
+		if (!jobAd) {
+			return res.status(404).json({ error: "Not found" });
+		}
+
 		return res.status(200).json(jobAd);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
+	}
+});
+
+// Retrieve application from job_ad_id
+router.get("/:id/application", async (req: Request, res: Response) => {
+	try {
+		const { id } = req.params;
+		if (!id) throw Error("Id not found");
+
+		const jobAd = await prisma.applications.findUnique({
+			where: {
+				job_ads_id: id,
+			},
+		});
+
+		if (!jobAd) {
+			return res.status(404).json({ error: "Not found" });
+		}
+
+		return res.status(200).json(jobAd);
+	} catch (e: any) {
+		return res.status(404).json({ msg: "Data not found!" });
 	}
 });
 

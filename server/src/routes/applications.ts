@@ -1,9 +1,11 @@
-import { Router, type Request, type Response } from "express";
+import { application, Router, type Request, type Response } from "express";
 import { pool } from "../database/db.js";
 import { createApplicationSchema } from "../schema/application.js";
 import { createApplicationTimelineSchema } from "../schema/application-timeline.js";
 import { createFileSchema } from "../schema/file.js";
 import { uploadSingle } from "./middleware/uploadFile.js";
+
+import { prisma } from "../lib/prisma.js";
 
 const router: Router = Router();
 
@@ -20,11 +22,16 @@ router.post("/", async (req: Request, res: Response) => {
 
 		// Function to initialise the timeline for the application
 		const initTimeline = async (applicationId: string) => {
-			const res = await pool.query(
-				"INSERT INTO application_timeline (application_id, event_type, title) VALUES ($1,$2,$3)",
-				[applicationId, "system", "Application Created"],
-			);
-			return res.rows[0];
+			if (!applicationId) return;
+
+			const timeline = await prisma.applicationTimeline.create({
+				data: {
+					application_id: applicationId,
+					event_type: "system",
+					title: "Created",
+				},
+			});
+			return timeline;
 		};
 
 		if (!parsed.success) {
@@ -42,22 +49,21 @@ router.post("/", async (req: Request, res: Response) => {
 			note,
 		} = parsed.data;
 
-		const result = await pool.query(
-			"INSERT INTO applications (job_ads_id, status, stage, last_follow_up_at, next_follow_up_at, applied_at, note) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
-			[
-				job_ads_id,
-				status,
-				stage,
-				last_follow_up_at,
-				next_follow_up_at,
-				applied_at,
-				note,
-			],
-		);
+		const application = await prisma.applications.create({
+			data: {
+				job_ads_id: job_ads_id,
+				status: status,
+				stage: stage,
+				last_follow_up_at: last_follow_up_at || null,
+				next_follow_up_at: next_follow_up_at || null,
+				applied_at: applied_at || null,
+				note: note,
+			},
+		});
 
-		initTimeline(result.rows[0].id);
+		initTimeline(application.id);
 
-		return res.status(200).json(result.rows[0]);
+		return res.status(200).json(application);
 	} catch (e: any) {
 		console.error("DB ERROR:", e); // keep this
 
@@ -89,6 +95,9 @@ router.post("/", async (req: Request, res: Response) => {
 router.post("/:id/timeline", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
+
+		if (!id) throw Error("Id not found");
+
 		const parsed = createApplicationTimelineSchema.safeParse(req.body);
 
 		if (!parsed.success) {
@@ -98,12 +107,16 @@ router.post("/:id/timeline", async (req: Request, res: Response) => {
 
 		const { event_type, title, description } = parsed.data;
 
-		const result = await pool.query(
-			"INSERT INTO application_timeline (application_id, event_type, title, description) values ($1,$2,$3,$4) RETURNING *",
-			[id, event_type, title, description],
-		);
+		const timeline = await prisma.applicationTimeline.create({
+			data: {
+				application_id: id,
+				event_type: event_type,
+				title: title,
+				description: description || null,
+			},
+		});
 
-		return res.status(200).json(result.rows[0]);
+		return res.status(200).json(timeline);
 	} catch (e: any) {
 		console.error("DB ERROR:", e); // keep this
 
@@ -138,6 +151,8 @@ router.post(
 		try {
 			const { id } = req.params;
 
+			if (!id) throw Error("Id not found");
+
 			if (!req.file)
 				return res.status(400).json({ message: "file is required" });
 
@@ -165,12 +180,19 @@ router.post(
 
 			const { source } = parsed.data;
 
-			const result = await pool.query(
-				"INSERT INTO files (application_id, file_name, file_type, mime_type, size_bytes, source, storage_key) values ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
-				[id, file_name, file_type, mime_type, size_bytes, source, storage_key],
-			);
+			const file = await prisma.files.create({
+				data: {
+					application_id: id,
+					file_name: file_name,
+					file_type: file_type,
+					mime_type: mime_type,
+					size_bytes: size_bytes,
+					source: source,
+					storage_key: storage_key,
+				},
+			});
 
-			return res.status(201).json(result.rows[0]);
+			return res.status(201).json(file);
 		} catch (e: any) {
 			console.error("DB ERROR:", e); // keep this
 
@@ -207,26 +229,15 @@ router.get("/", async (_req: Request, res: Response) => {
 			"SELECT * FROM applications ORDER BY updated_at DESC",
 		);
 
-		if (result.rowCount === 0) return res.status(404).json("Not Found");
+		const application = await prisma.applications.findMany({
+			orderBy: {
+				updated_at: "desc",
+			},
+		});
 
-		return res.status(200).json(result.rows);
-	} catch (e: any) {
-		return res.status(500).json(e.message);
-	}
-});
+		if (!application) return res.status(404).json("Not Found");
 
-// Retrieve by job_ads
-router.get("/:id/application", async (req: Request, res: Response) => {
-	try {
-		const { id } = req.params;
-		const result = await pool.query(
-			"SELECT * FROM applications WHERE job_ads_id = $1 ORDER BY updated_at DESC",
-			[id],
-		);
-
-		if (result.rowCount === 0) return res.status(404).json("Not Found");
-
-		return res.status(200).json(result.rows[0]);
+		return res.status(200).json(application);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
 	}
@@ -253,14 +264,21 @@ router.get("/:id", async (req: Request, res: Response) => {
 router.get("/:id/timeline", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
-		const result = await pool.query(
-			"SELECT * FROM application_timeline WHERE application_id = $1",
-			[id],
-		);
 
-		if (result.rowCount === 0) return res.status(404).json("Not Found");
+		if (!id) throw Error("Id not found");
 
-		return res.status(200).json(result.rows);
+		const timelines = await prisma.applicationTimeline.findMany({
+			where: {
+				application_id: id,
+			},
+			orderBy: {
+				created_at: "desc",
+			},
+		});
+
+		if (!timelines) return res.status(404).json("Not Found");
+
+		return res.status(200).json(timelines);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
 	}
@@ -270,12 +288,19 @@ router.get("/:id/timeline", async (req: Request, res: Response) => {
 router.get("/:id/file", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
-		const result = await pool.query(
-			"SELECT * FROM files WHERE application_id = $1",
-			[id],
-		);
 
-		return res.status(200).json(result.rows);
+		if (!id) throw Error("Id not found");
+
+		const files = await prisma.files.findMany({
+			where: {
+				application_id: id,
+			},
+			orderBy: {
+				created_at: "desc",
+			},
+		});
+
+		return res.status(200).json(files);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
 	}
@@ -285,44 +310,39 @@ router.get("/:id/file", async (req: Request, res: Response) => {
 router.patch("/:id", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
-		const allowedList = new Set([
+
+		if (!id) throw Error("Id not found");
+
+		const allowed = new Set([
 			"status",
 			"stage",
 			"last_follow_up_at",
 			"next_follow_up_at",
 			"applied_at",
-			"notes",
+			"note",
 		]);
 
-		const entries = Object.entries(req.body).filter(
-			([key, value]) => allowedList.has(key) && value != undefined,
+		// keep allowed keys + drop undefined
+		const data = Object.fromEntries(
+			Object.entries(req.body ?? {}).filter(
+				([k, v]) => allowed.has(k) && v !== undefined,
+			),
 		);
 
-		if (entries.length === 0)
+		if (Object.keys(data).length === 0) {
 			return res.status(400).json({ error: "No valid fields to update" });
-
-		const sets: string[] = [];
-		const params: any[] = [];
-
-		for (const [key, value] of entries) {
-			params.push(value);
-			sets.push(`${key} = $${params.length}`);
 		}
 
-		sets.push("updated_at = NOW()");
+		const application = await prisma.applications.update({
+			where: { id },
+			data: {
+				...data,
+			},
+		});
 
-		params.push(id);
+		if (!application) return res.status(404).json({ error: "Not found" });
 
-		const sql = `UPDATE applications SET ${sets.join(", ")} WHERE id = $${
-			params.length
-		} RETURNING *`;
-
-		const result = await pool.query(sql, params);
-
-		if (result.rowCount === 0)
-			return res.status(404).json({ error: "Not found" });
-
-		return res.json(result.rows[0]);
+		return res.json(application);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
 	}
@@ -333,12 +353,13 @@ router.delete("/:id", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
 
-		const result = await pool.query(
-			"DELETE FROM applications WHERE id = $1 RETURNING *",
-			[id],
-		);
+		if (!id) throw Error("Id not found");
 
-		if (result.rowCount === 0) {
+		const application = await prisma.applications.delete({
+			where: { id },
+		});
+
+		if (!application) {
 			return res.status(404).json({ error: "Not found" });
 		}
 		return res.status(204).send();
