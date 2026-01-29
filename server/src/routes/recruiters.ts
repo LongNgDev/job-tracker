@@ -1,6 +1,8 @@
 import { Router, type Request, type Response } from "express";
 import { pool } from "../database/db.js";
 import { createRecruiterSchema } from "../schema/recruiter.js";
+import { prisma } from "../lib/prisma.js";
+import { object } from "zod";
 
 const router: Router = Router();
 
@@ -31,12 +33,24 @@ router.post("/", async (req: Request, res: Response) => {
 			note,
 		} = parsed.data;
 
-		const result = await pool.query(
-			`INSERT INTO recruiters (name, role, working_at, linkedin_url, email, phone, location, note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-			[name, role, working_at, linkedin_url, email, phone, location, note],
-		);
+		const recruiter = await prisma.recruiter.create({
+			data: {
+				name: name,
+				role: role,
+				working_at: working_at,
+				linkedin_url: linkedin_url || null,
+				email: email || null,
+				phone: phone || null,
+				location: location || null,
+				note: note || null,
+			},
+		});
 
-		return res.status(200).json(result.rows[0]);
+		if (!recruiter) {
+			return res.status(400).json({ error: "No valid fields to create" });
+		}
+
+		return res.status(200).json(recruiter);
 	} catch (e: any) {
 		console.error("DB ERROR:", e); // keep this
 
@@ -68,13 +82,15 @@ router.post("/", async (req: Request, res: Response) => {
 // Retrieve All
 router.get("/", async (_req: Request, res: Response) => {
 	try {
-		const result = await pool.query(
-			"SELECT * FROM recruiters ORDER BY updated_at DESC",
-		);
+		const recruiter = await prisma.recruiter.findMany({
+			orderBy: {
+				updated_at: "desc",
+			},
+		});
 
-		if (result.rowCount === 0) return res.status(404).json("Data Not Found!");
+		if (recruiter) return res.status(404).json("Data Not Found!");
 
-		return res.status(200).json(result.rows);
+		return res.status(200).json(recruiter);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
 	}
@@ -84,13 +100,22 @@ router.get("/", async (_req: Request, res: Response) => {
 router.get("/:id", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
+
+		if (!id) throw Error("Id not found");
+
 		const result = await pool.query("SELECT * FROM recruiters WHERE id = $1", [
 			id,
 		]);
 
-		if (result.rowCount === 0) return res.status(404).json("Data Not Found!");
+		const recruiter = await prisma.recruiter.findUnique({
+			where: {
+				id,
+			},
+		});
 
-		return res.status(200).json(result.rows[0]);
+		if (recruiter) return res.status(404).json("Data Not Found!");
+
+		return res.status(200).json(recruiter);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
 	}
@@ -101,7 +126,9 @@ router.patch("/:id", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
 
-		const allowedList = new Set([
+		if (!id) throw Error("Id not found");
+
+		const allowed = new Set([
 			"role",
 			"working_at",
 			"linkedin_url",
@@ -112,38 +139,26 @@ router.patch("/:id", async (req: Request, res: Response) => {
 		]);
 
 		// Filter out key not valid and empty value
-		const entries = Object.entries(req.body).filter(
-			([key, value]) => allowedList.has(key) && value != undefined,
+		const data = Object.fromEntries(
+			Object.entries(req.body ?? {}).filter(
+				([k, v]) => allowed.has(k) && v !== undefined,
+			),
 		);
-
 		// Return if not valid fields
-		if (entries.length === 0) {
+		if (Object.keys(data).length === 0) {
 			return res.status(400).json({ error: "No valid fields to update" });
 		}
 
-		const sets: string[] = [];
-		const params: any[] = [];
+		const recruiter = await prisma.recruiter.update({
+			where: { id },
+			data: {
+				...data,
+			},
+		});
 
-		for (const [key, value] of entries) {
-			params.push(value);
-			sets.push(`${key} = $${params.length}`);
-		}
+		if (recruiter) return res.status(404).json({ error: "Not found" });
 
-		// updated field updated_at to current timestamp
-		sets.push("updated_at = NOW()");
-
-		params.push(id);
-
-		const sql = `UPDATE recruiters SET ${sets.join(", ")} WHERE id = $${
-			params.length
-		} RETURNING *`;
-
-		const result = await pool.query(sql, params);
-
-		if (result.rowCount === 0)
-			return res.status(404).json({ error: "Not found" });
-
-		return res.status(200).json(result.rows[0]);
+		return res.status(200).json(recruiter);
 	} catch (e: any) {
 		return res.status(500).json(e.message);
 	}
@@ -154,12 +169,18 @@ router.delete("/:id", async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
 
+		if (!id) throw Error("Id not found");
+
 		const result = await pool.query(
 			"DELETE FROM recruiters WHERE id = $1 RETURNING *",
 			[id],
 		);
 
-		if (result.rowCount === 0) {
+		const recruiter = await prisma.recruiter.delete({
+			where: { id },
+		});
+
+		if (recruiter) {
 			return res.status(404).json({ error: "Not found" });
 		}
 		return res.status(204).send();
