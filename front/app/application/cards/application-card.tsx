@@ -239,8 +239,9 @@ function ApplicationCard({
           <div className="flex flex-col gap-4">
             <CardTitle>Application Timeline</CardTitle>
             <Card>
-              <CardContent>
-                <ol className="relative max-h-100 space-y-4 overflow-auto">
+              <CardContent className="relative">
+                <div className="border-muted absolute top-0 left-7.5 h-full border-l-2" />
+                <ol className="relative max-h-100 space-y-4 overflow-y-auto">
                   {timeline ? (
                     <>
                       {[...timeline].reverse().map((e) => (
