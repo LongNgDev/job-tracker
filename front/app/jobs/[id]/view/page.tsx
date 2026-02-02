@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { JobAd } from "../../job-ads.types";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,7 +22,16 @@ import useFetch from "@/hooks/useFetch";
 import { Recruiter } from "@/app/recruiter/recruiter.types";
 import { FileType } from "@/app/file/file.types";
 
+import { JobAdsForm } from "@/components/forms/job-ads-form";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
 function ViewJob() {
+  const router = useRouter();
   const { id } = useParams<{ id: string }>();
 
   const { data: job, refetch: refetchJob } = useFetch<JobAd>(
@@ -59,6 +68,14 @@ function ViewJob() {
 
   const { data: files, refetch: refetchFiles } = useFetch<FileType[]>(fileUrl);
 
+  const deleteJob = async () => {
+    const res = await fetch(`http://localhost:4000/api/job_ads/${id}`, {
+      method: "DELETE",
+    });
+
+    return res;
+  };
+
   return (
     <Card className="shadow-2xl">
       {job ? (
@@ -76,14 +93,48 @@ function ViewJob() {
 
               {/* Action buttons */}
               <div className="flex gap-2">
-                <Button variant={"outline"}>Edit</Button>
-                <Button variant={"destructive"}>Delete</Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant={"outline"}>Edit</Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-h-[80%] overflow-auto">
+                    <DialogTitle></DialogTitle>
+                    <JobAdsForm
+                      initialData={{
+                        company_name: job.company_name,
+                        job_title: job.job_title,
+                        location: job.location,
+                        job_type: job.job_type,
+                        job_description: job.job_description,
+                        source: job.source,
+                        url: job.url,
+                        published_at: job.published_at,
+                        expired_at: job.expired_at,
+                        skill_requirements: job.skill_requirements,
+                        tech_stack: job.tech_stack,
+                        salary_min: job.salary_min,
+                        salary_max: job.salary_max,
+                        note: job.note,
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
+                <Button
+                  variant={"destructive"}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    deleteJob();
+                    router.push("/jobs");
+                  }}
+                >
+                  Delete
+                </Button>
               </div>
             </div>
           </CardHeader>
 
           <CardContent>
-            <div className="flex w-full justify-between gap-2 py-4">
+            <div className="flex w-full justify-between gap-2 py-4 select-text">
               <div className="bg-card flex grow flex-col items-center gap-4 rounded-sm border p-4 shadow-md">
                 <CardDescription>Job Type</CardDescription>
                 <CardTitle>{job?.job_title}</CardTitle>

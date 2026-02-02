@@ -17,6 +17,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Tiptap from "../ui/tiptap";
+import { Badge } from "../ui/badge";
 
 const formSchema = z
   .object({
@@ -49,7 +50,11 @@ const formSchema = z
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function JobAdsForm() {
+export function JobAdsForm({
+  initialData,
+}: {
+  initialData?: Partial<FormValues>;
+}) {
   const router = useRouter();
 
   // 1. Define a form
@@ -70,6 +75,7 @@ export function JobAdsForm() {
       salary_min: undefined,
       salary_max: undefined,
       note: "",
+      ...initialData,
     } satisfies Partial<FormValues>,
   });
 
@@ -108,421 +114,397 @@ export function JobAdsForm() {
   }
 
   return (
-    <div className="m-auto flex w-4/5 max-w-4xl min-w-xl flex-col justify-center gap-4 py-6">
-      <div>
-        <h2 className="self-center py-6 text-2xl font-semibold capitalize">
-          Job Ads Form
-        </h2>
-      </div>
-      <div className="border border-black/10 p-6 shadow-2xl">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="row-auto grid grid-cols-2 gap-6"
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="row-auto grid grid-cols-2 gap-6"
+      >
+        {/* Info Section seperate */}
+        <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
+          Basics
+        </div>
+
+        {/* Company Name */}
+        <FormField
+          control={form.control}
+          name="company_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Company Name <span className="text-red-600">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Atlassian" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Job Title */}
+        <FormField
+          control={form.control}
+          name="job_title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Job Title<span className="text-red-600">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Junior Software Engineer" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Location (optional) */}
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g. Melbourne, VIC (optional)"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Job Type */}
+        <FormField
+          control={form.control}
+          name="job_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Job Type<span className="text-red-600">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Full-time / Contract" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Job Description */}
+        <FormField
+          control={form.control}
+          name="job_description"
+          render={({ field }) => (
+            <FormItem className="col-span-2">
+              <FormLabel>
+                Job Description<span className="text-red-600">*</span>
+              </FormLabel>
+              <FormControl>
+                <Tiptap value={field.value ?? ""} onChange={field.onChange} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Info Section seperate */}
+        <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
+          Posting Info
+        </div>
+
+        {/* Source */}
+        <FormField
+          control={form.control}
+          name="source"
+          render={({ field }) => (
+            <FormItem className="col-span-2">
+              <FormLabel>
+                Source<span className="text-red-600">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. LinkedIn / Seek" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* URL (optional in your schema) */}
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem className="col-span-2">
+              <FormLabel>
+                URL<span className="text-red-600">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="https://..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Published At */}
+        <FormField
+          control={form.control}
+          name="published_at"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Published At<span className="text-red-600">*</span>
+              </FormLabel>
+
+              <FormControl>
+                <Input
+                  type="date"
+                  // onChange={(e) => field.onChange(e.target.value)}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Expired At (optional) */}
+        <FormField
+          control={form.control}
+          name="expired_at"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Expired At</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  onChange={(e) => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Info Section seperate */}
+        <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
+          Requirements
+        </div>
+
+        {/* Skill Requirements (basic: comma-separated -> array) */}
+        <FormField
+          control={form.control}
+          name="skill_requirements"
+          render={({ field }) => (
+            <FormItem className="col-span-2">
+              <FormLabel>Skill Requirements</FormLabel>
+
+              <div className="flex gap-2">
+                <FormControl>
+                  <Input
+                    placeholder="e.g. React"
+                    value={skillInput}
+                    onChange={(e) => setSkillInput(e.target.value)}
+                  />
+                </FormControl>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (!skillInput.trim()) return;
+                    field.onChange([...(field.value ?? []), skillInput.trim()]);
+                    setSkillInput("");
+                  }}
+                  variant={"secondary"}
+                >
+                  Add
+                </Button>
+              </div>
+
+              {/* Display added skills */}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(field.value ?? []).map((skill, i) => (
+                  <div
+                    key={i}
+                    className="bg-mute items-center rounded-md px-2 text-sm"
+                  >
+                    {/* <span className="">{stack}</span> */}
+                    <Badge
+                      // type="button"
+                      variant={"secondary"}
+                      className="h-fit whitespace-normal capitalize hover:cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+
+                        const next = (field.value ?? []).filter(
+                          (val) => val !== skill,
+                        );
+
+                        field.onChange(next);
+                      }}
+                    >
+                      {skill}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Tech Stack (basic: comma-separated -> array) */}
+        <FormField
+          control={form.control}
+          name="tech_stack"
+          render={({ field }) => (
+            <FormItem className="col-span-2">
+              <FormLabel>Tech Stack</FormLabel>
+
+              <div className="flex gap-2">
+                <FormControl>
+                  <Input
+                    placeholder="e.g. Next.js, PostgreSQL, Docker"
+                    value={stackInput}
+                    onChange={(e) => setStackInput(e.target.value)}
+                  />
+                </FormControl>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (!stackInput.trim()) return;
+                    field.onChange([...(field.value ?? []), stackInput.trim()]);
+                    setStackInput("");
+                  }}
+                  variant={"secondary"}
+                >
+                  Add
+                </Button>
+              </div>
+
+              {/* Display added stack */}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(field.value ?? []).map((stack, i) => (
+                  <div
+                    key={i}
+                    className="bg-mute items-center rounded-md px-2 text-sm"
+                  >
+                    {/* <span className="">{stack}</span> */}
+                    <Badge
+                      // type="button"
+                      variant={"secondary"}
+                      className="h-fit capitalize hover:cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+
+                        const next = (field.value ?? []).filter(
+                          (val) => val !== stack,
+                        );
+
+                        field.onChange(next);
+                      }}
+                    >
+                      {stack}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Info Section seperate */}
+        <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
+          Others
+        </div>
+
+        {/* Salary Min (optional) */}
+        <FormField
+          control={form.control}
+          name="salary_min"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Salary Min</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  placeholder="e.g. 70000"
+                  min={0}
+                  // value={field.value ?? ""}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value === "" ? undefined : e.target.value,
+                    )
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Salary Max (optional) */}
+        <FormField
+          control={form.control}
+          name="salary_max"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Salary Max</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 90000"
+                  // value={field.value ?? ""}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value === "" ? undefined : e.target.value,
+                    )
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Job Description */}
+        <FormField
+          control={form.control}
+          name="note"
+          render={({ field }) => (
+            <FormItem className="col-span-2">
+              <FormLabel>Note</FormLabel>
+              <FormControl>
+                <Tiptap value={field.value ?? ""} onChange={field.onChange} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="col-start-2 mt-6 flex justify-end gap-2">
+          <Button
+            type="reset"
+            onClick={() => {
+              form.reset();
+              router.push("/jobs");
+            }}
+            className="hover:cursor-pointer"
+            variant={"destructive"}
           >
-            {/* Info Section seperate */}
-            <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
-              Basics
-            </div>
-
-            {/* Company Name */}
-            <FormField
-              control={form.control}
-              name="company_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Company Name <span className="text-red-600">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Atlassian" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Job Title */}
-            <FormField
-              control={form.control}
-              name="job_title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Job Title<span className="text-red-600">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g. Junior Software Engineer"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Location (optional) */}
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g. Melbourne, VIC (optional)"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Job Type */}
-            <FormField
-              control={form.control}
-              name="job_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Job Type<span className="text-red-600">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Full-time / Contract" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Job Description */}
-            <FormField
-              control={form.control}
-              name="job_description"
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>
-                    Job Description<span className="text-red-600">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Tiptap
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Info Section seperate */}
-            <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
-              Posting Info
-            </div>
-
-            {/* Source */}
-            <FormField
-              control={form.control}
-              name="source"
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>
-                    Source<span className="text-red-600">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. LinkedIn / Seek" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* URL (optional in your schema) */}
-            <FormField
-              control={form.control}
-              name="url"
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>
-                    URL<span className="text-red-600">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Published At */}
-            <FormField
-              control={form.control}
-              name="published_at"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Published At<span className="text-red-600">*</span>
-                  </FormLabel>
-
-                  <FormControl>
-                    <Input
-                      type="date"
-                      // onChange={(e) => field.onChange(e.target.value)}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Expired At (optional) */}
-            <FormField
-              control={form.control}
-              name="expired_at"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expired At</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      onChange={(e) => field.onChange(e.target.value)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Info Section seperate */}
-            <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
-              Requirements
-            </div>
-
-            {/* Skill Requirements (basic: comma-separated -> array) */}
-            <FormField
-              control={form.control}
-              name="skill_requirements"
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>Skill Requirements</FormLabel>
-
-                  <div className="flex gap-2">
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. React"
-                        value={skillInput}
-                        onChange={(e) => setSkillInput(e.target.value)}
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (!skillInput.trim()) return;
-                        field.onChange([
-                          ...(field.value ?? []),
-                          skillInput.trim(),
-                        ]);
-                        setSkillInput("");
-                      }}
-                      variant={"secondary"}
-                    >
-                      Add
-                    </Button>
-                  </div>
-
-                  {/* Display added skills */}
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {(field.value ?? []).map((skill, i) => (
-                      <div
-                        key={i}
-                        className="bg-mute items-center rounded-md text-sm"
-                      >
-                        {/* <span className="">{stack}</span> */}
-                        <Button
-                          type="button"
-                          variant={"ghost"}
-                          className="hover:bg-muted hover:text-foreground h-fit capitalize hover:cursor-pointer"
-                          onClick={(e) => {
-                            e.preventDefault();
-
-                            const next = (field.value ?? []).filter(
-                              (val) => val !== skill,
-                            );
-
-                            field.onChange(next);
-                          }}
-                        >
-                          {skill}
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Tech Stack (basic: comma-separated -> array) */}
-            <FormField
-              control={form.control}
-              name="tech_stack"
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>Tech Stack</FormLabel>
-
-                  <div className="flex gap-2">
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. Next.js, PostgreSQL, Docker"
-                        value={stackInput}
-                        onChange={(e) => setStackInput(e.target.value)}
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (!stackInput.trim()) return;
-                        field.onChange([
-                          ...(field.value ?? []),
-                          stackInput.trim(),
-                        ]);
-                        setStackInput("");
-                      }}
-                      variant={"secondary"}
-                    >
-                      Add
-                    </Button>
-                  </div>
-
-                  {/* Display added stack */}
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {(field.value ?? []).map((stack, i) => (
-                      <div
-                        key={i}
-                        className="bg-mute items-center rounded-md text-sm"
-                      >
-                        {/* <span className="">{stack}</span> */}
-                        <Button
-                          type="button"
-                          variant={"ghost"}
-                          className="hover:bg-muted hover:text-foreground h-fit capitalize hover:cursor-pointer"
-                          onClick={(e) => {
-                            e.preventDefault();
-
-                            const next = (field.value ?? []).filter(
-                              (val) => val !== stack,
-                            );
-
-                            field.onChange(next);
-                          }}
-                        >
-                          {stack}
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Info Section seperate */}
-            <div className="border-foreground col-span-2 border-b p-2 text-xl font-semibold tracking-wide">
-              Others
-            </div>
-
-            {/* Salary Min (optional) */}
-            <FormField
-              control={form.control}
-              name="salary_min"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Salary Min</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 70000"
-                      min={0}
-                      // value={field.value ?? ""}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === "" ? undefined : e.target.value,
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Salary Max (optional) */}
-            <FormField
-              control={form.control}
-              name="salary_max"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Salary Max</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      placeholder="e.g. 90000"
-                      // value={field.value ?? ""}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === "" ? undefined : e.target.value,
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Job Description */}
-            <FormField
-              control={form.control}
-              name="note"
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormLabel>Note</FormLabel>
-                  <FormControl>
-                    <Tiptap
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="col-start-2 mt-6 flex justify-end gap-2">
-              <Button
-                type="reset"
-                onClick={() => {
-                  form.reset();
-                  router.push("/jobs");
-                }}
-                className="hover:cursor-pointer"
-                variant={"destructive"}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" className="hover:cursor-pointer">
-                Save
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </div>
-    </div>
+            Cancel
+          </Button>
+          <Button type="submit" className="hover:cursor-pointer">
+            Save
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

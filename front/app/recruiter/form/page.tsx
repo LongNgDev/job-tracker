@@ -10,7 +10,7 @@ const formSchema = z.object({
   name: z.string().min(2).max(50),
   role: z.string().min(2).max(50),
   working_at: z.string().min(2).max(50),
-  linkedin_url: z.url().optional(),
+  linkedin_url: z.string().optional(),
   email: z.email().optional(),
   phone: z
     .string()
@@ -66,7 +66,7 @@ function CreateRecruiter() {
         </h2>
       </div>
       <div className="border border-black/10 p-6 shadow-2xl">
-        <RecruiterForm onSubmit={onSubmit} onCancel={onCancel} />
+        <RecruiterForm onSubmit={onSubmit} onSuccess={onCancel} />
       </div>
     </div>
   );

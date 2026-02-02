@@ -81,7 +81,7 @@ function FileCard({
       );
 
       if (!res.ok) throw new Error("Upload failed");
-
+      setFile(null);
       refetchFileCol();
     } catch (e) {
       console.error(e);

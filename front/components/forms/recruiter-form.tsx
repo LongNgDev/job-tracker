@@ -28,7 +28,7 @@ const formSchema = z.object({
     .max(14, { message: "Must be a valid mobile number" })
     .optional(),
   location: z.string().min(2).max(50).optional(),
-  note: z.string().optional().optional(),
+  note: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -57,8 +57,8 @@ function RecruiterForm({
       role: "",
       working_at: "",
       linkedin_url: "",
-      email: "",
-      phone: "",
+      email: undefined,
+      phone: undefined,
       location: "",
       note: "",
     } satisfies Partial<FormValues>,

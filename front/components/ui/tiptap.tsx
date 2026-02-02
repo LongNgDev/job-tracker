@@ -24,7 +24,8 @@ const Tiptap = ({
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: {
-        class: "min-h-32 rounded-md border p-3 focus:outline-none",
+        class:
+          "min-h-32 rounded-md border p-3 focus:outline-none max-h-80 overflow-auto",
       },
     },
   });

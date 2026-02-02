@@ -293,19 +293,22 @@ function ApplicationCard({
               </div>
             </div>
           </div> */}
-          <div className="flex flex-col gap-4">
-            <CardTitle>Application Timeline</CardTitle>
-            <Card>
+          <div className="flex gap-4">
+            {/* Timeline */}
+            <Card className="grow">
+              <CardHeader>
+                <CardTitle>Logs</CardTitle>
+              </CardHeader>
               <CardContent className="relative">
-                <div className="border-muted absolute top-0 left-7.5 h-full border-l-2" />
+                <div className="absolute top-0 left-7 h-full border-l-2" />
                 <ol className="relative max-h-100 space-y-4 overflow-y-auto">
                   {timeline ? (
                     <>
                       {[...timeline].map((e) => (
                         <li className="group relative flex" key={e.id}>
                           <Circle
-                            className="fill-muted-foreground mt-1 group-first:fill-green-500 group-first:text-green-500"
-                            size={14}
+                            className="fill-muted-foreground group-first:fill-primary group-first:text-primary mt-1.75"
+                            size={10}
                           />
 
                           <div>
@@ -324,12 +327,12 @@ function ApplicationCard({
                                 )}
                               </CardDescription>
 
-                              <Badge
+                              {/* <Badge
                                 variant={"outline"}
                                 className="bg-muted scale-75 font-bold tracking-wide uppercase"
                               >
                                 {e.event_type}
-                              </Badge>
+                              </Badge> */}
 
                               {/* <div className="p-2"> */}
                               {/*   <Badge
@@ -355,6 +358,15 @@ function ApplicationCard({
                   )}
                 </ol>
               </CardContent>
+            </Card>
+
+            {/* Notes */}
+            <Card className="w-2/3">
+              <CardHeader className="flex justify-center">
+                <CardTitle>Note</CardTitle>
+              </CardHeader>
+              <Separator />
+              <CardContent>{application.note}</CardContent>
             </Card>
           </div>
           <div className="flex flex-col gap-4">

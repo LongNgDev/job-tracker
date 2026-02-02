@@ -30,4 +30,6 @@ export type JobAd = {
 
   created_at: string;
   updated_at: string;
+
+  note: string;
 };
