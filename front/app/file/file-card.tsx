@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import React, { useState } from "react";
 import { DataTable } from "../data-table";
 import { columns } from "./columns";
@@ -13,12 +19,30 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldDescription } from "@/components/ui/field";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ImageOff } from "lucide-react";
+import { fi } from "date-fns/locale";
 
 const MAX_MB = 5;
 const MAX_BYTES = MAX_MB * 1024 * 1024;
 
 type FileType = {
   id: string;
+  category: string;
   file_name: string;
   file_type: string;
   source: string;
@@ -102,9 +126,31 @@ function FileCard({
     }
   };
 
+  const files = [
+    {
+      value: "resume",
+      trigger: "Resume",
+      content: fileCol?.find((file) => file.category.toLowerCase() == "resume"),
+    },
+    {
+      value: "coverletter",
+      trigger: "Cover Letter",
+      content: fileCol?.find(
+        (file) => file.category.toLowerCase() == "cover_letter",
+      ),
+    },
+    {
+      value: "other",
+      trigger: "Others",
+      content: fileCol?.filter(
+        (file) => file.category.toLowerCase() == "other",
+      ),
+    },
+  ];
+
   return (
     <Card>
-      <CardHeader className="flex justify-end">
+      {/*  <CardHeader className="flex justify-end">
         <Dialog>
           <div className="flex items-center justify-center gap-2">
             <DialogDescription className="text-base">
@@ -145,6 +191,247 @@ function FileCard({
         ) : (
           <></>
         )}
+      </CardContent> */}
+      <CardContent>
+        <Accordion type="single" defaultValue="resume">
+          {fileCol && fileCol.length > 0 ? (
+            <>
+              {files.map((file) => (
+                <AccordionItem value={file.value} key={file.value}>
+                  <AccordionTrigger>{file.trigger}</AccordionTrigger>
+                  <AccordionContent>
+                    {file.content ? (
+                      <div className="flex gap-6">
+                        {Array.isArray(file.content) ? (
+                          <>
+                            {file.content.map((file) => (
+                              <div key={file.id} className="">
+                                <p>
+                                  <strong>File:</strong> {file.file_name}
+                                </p>
+                                <p>
+                                  <strong>Type:</strong> {file.file_type}
+                                </p>
+                                <p>
+                                  <strong>Size:</strong>{" "}
+                                  {(file.size_bytes / 1024).toFixed(2)} KB
+                                </p>
+                                <Button
+                                  onClick={() => onDelete(file.id)}
+                                  variant="destructive"
+                                  className="mt-2"
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            ))}
+                          </>
+                        ) : (
+                          <div>
+                            <p>
+                              <strong>File:</strong> {file.content.file_name}
+                            </p>
+                            <p>
+                              <strong>Type:</strong> {file.content.file_type}
+                            </p>
+                            <p>
+                              <strong>Size:</strong>{" "}
+                              {(file.content.size_bytes / 1024).toFixed(2)} KB
+                            </p>
+                            <Button
+                              // onClick={() => onDelete(!Array.isArray(file.content) && file.content ? file.content.id : "")}
+                              variant="destructive"
+                              className="mt-2"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Empty>
+                        <EmptyContent>
+                          <EmptyTitle>
+                            No {file.trigger.toLowerCase()} uploaded yet
+                          </EmptyTitle>
+                          <EmptyDescription>
+                            Add your {file.trigger.toLowerCase()} here to keep
+                            track of what you sent for this role.
+                          </EmptyDescription>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                disabled={
+                                  fileCol ? fileCol?.length >= 5 : false
+                                }
+                                className="mt-6"
+                              >
+                                Upload {file.trigger.toLowerCase()}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Upload File</DialogTitle>
+                                <DialogDescription></DialogDescription>
+                              </DialogHeader>
+                              <Field>
+                                <div className="flex gap-2">
+                                  <Input
+                                    id="file"
+                                    type="file"
+                                    onChange={onFileChange}
+                                  />
+                                  <DialogTrigger asChild>
+                                    <Button onClick={onUpload} disabled={!file}>
+                                      Upload
+                                    </Button>
+                                  </DialogTrigger>
+                                </div>
+                                <FieldDescription>
+                                  Select a file to upload.
+                                </FieldDescription>
+                              </Field>
+                            </DialogContent>
+                          </Dialog>
+                        </EmptyContent>
+                      </Empty>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </>
+          ) : (
+            <></>
+          )}
+
+          {/* <AccordionItem value="resume">
+            <AccordionTrigger>Resume</AccordionTrigger>
+            <AccordionContent>
+              
+              {!fileCol || fileCol?.length == 0 ? (
+                <Card>
+                  <CardContent>
+                    <Empty>
+                      <EmptyContent>
+                        <EmptyTitle>No resume uploaded yet</EmptyTitle>
+                        <EmptyDescription>
+                          Add your resume here to keep track of what you sent
+                          for this role.
+                        </EmptyDescription>
+                      </EmptyContent>
+                    </Empty>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Empty>
+                  <EmptyContent>
+                    <EmptyTitle>No resume uploaded yet</EmptyTitle>
+                    <EmptyDescription>
+                      Add your resume here to keep track of what you sent for
+                      this role.
+                    </EmptyDescription>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          disabled={fileCol ? fileCol?.length >= 5 : false}
+                          className="mt-6"
+                        >
+                          Upload resume
+                        </Button>
+                      </DialogTrigger>
+
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Upload File</DialogTitle>
+                          <DialogDescription></DialogDescription>
+                        </DialogHeader>
+                        <Field>
+                          <div className="flex gap-2">
+                            <Input
+                              id="file"
+                              type="file"
+                              onChange={onFileChange}
+                            />
+                            <DialogTrigger asChild>
+                              <Button onClick={onUpload} disabled={!file}>
+                                Upload
+                              </Button>
+                            </DialogTrigger>
+                          </div>
+                          <FieldDescription>
+                            Select a file to upload.
+                          </FieldDescription>
+                        </Field>
+                      </DialogContent>
+                    </Dialog>
+                  </EmptyContent>
+                </Empty>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="coverletter">
+            <AccordionTrigger>Cover Letter</AccordionTrigger>
+            <AccordionContent>
+              {!fileCol || fileCol?.length == 0 ? (
+                <Card>
+                  <CardContent>
+                    <Empty>
+                      <EmptyContent>
+                        <EmptyTitle>No resume uploaded yet</EmptyTitle>
+                        <EmptyDescription>
+                          Add your resume here to keep track of what you sent
+                          for this role.
+                        </EmptyDescription>
+                      </EmptyContent>
+                    </Empty>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Empty>
+                  <EmptyContent>
+                    <EmptyTitle>No resume uploaded yet</EmptyTitle>
+                    <EmptyDescription>
+                      Add your resume here to keep track of what you sent for
+                      this role.
+                    </EmptyDescription>
+                    <Button>Upload resume</Button>
+                  </EmptyContent>
+                </Empty>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="others">
+            <AccordionTrigger>others</AccordionTrigger>
+            <AccordionContent>
+              {!fileCol || fileCol?.length == 0 ? (
+                <Card>
+                  <CardContent>
+                    <Empty>
+                      <EmptyContent>
+                        <EmptyTitle>No resume uploaded yet</EmptyTitle>
+                        <EmptyDescription>
+                          Add your resume here to keep track of what you sent
+                          for this role.
+                        </EmptyDescription>
+                      </EmptyContent>
+                    </Empty>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Empty>
+                  <EmptyContent>
+                    <EmptyTitle>No resume uploaded yet</EmptyTitle>
+                    <EmptyDescription>
+                      Add your resume here to keep track of what you sent for
+                      this role.
+                    </EmptyDescription>
+                    <Button>Upload resume</Button>
+                  </EmptyContent>
+                </Empty>
+              )}
+            </AccordionContent>
+          </AccordionItem> */}
+        </Accordion>
       </CardContent>
     </Card>
   );
