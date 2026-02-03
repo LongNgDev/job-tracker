@@ -85,8 +85,10 @@ function ViewJob() {
               {/* Title */}
 
               <div className="flex flex-col gap-2">
-                <CardTitle>{job?.job_title}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-2xl tracking-wide">
+                  {job?.job_title}
+                </CardTitle>
+                <CardDescription className="text-base">
                   {job?.company_name} • {job?.location}
                 </CardDescription>
               </div>
@@ -98,7 +100,13 @@ function ViewJob() {
                     <Button variant={"outline"}>Edit</Button>
                   </DialogTrigger>
                   <DialogContent className="max-h-[80%] overflow-auto">
-                    <DialogTitle></DialogTitle>
+                    <DialogTitle>
+                      {new Date(job.published_at).toLocaleDateString("en-Au", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </DialogTitle>
                     <JobAdsForm
                       initialData={{
                         company_name: job.company_name,
@@ -108,8 +116,12 @@ function ViewJob() {
                         job_description: job.job_description,
                         source: job.source,
                         url: job.url,
-                        published_at: job.published_at,
-                        expired_at: job.expired_at,
+                        published_at: new Date(job.published_at)
+                          .toISOString()
+                          .slice(0, 10),
+                        expired_at: job.expired_at
+                          ? new Date(job.expired_at).toISOString().slice(0, 10)
+                          : undefined,
                         skill_requirements: job.skill_requirements,
                         tech_stack: job.tech_stack,
                         salary_min: job.salary_min,
@@ -135,10 +147,10 @@ function ViewJob() {
 
           <CardContent>
             <div className="flex w-full justify-between gap-2 py-4 select-text">
-              <div className="bg-card flex grow flex-col items-center gap-4 rounded-sm border p-4 shadow-md">
+              {/* <div className="bg-card flex grow flex-col items-center gap-4 rounded-sm border p-4 shadow-md">
                 <CardDescription>Job Type</CardDescription>
                 <CardTitle>{job?.job_title}</CardTitle>
-              </div>
+              </div> */}
               <div className="bg-card flex grow flex-col items-center gap-4 rounded-sm border p-4 shadow-md">
                 <CardDescription>Work Mode</CardDescription>
                 <CardTitle>{job?.job_type}</CardTitle>

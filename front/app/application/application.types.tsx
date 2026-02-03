@@ -6,5 +6,6 @@ export type Application = {
   next_follow_up: string;
   applied_at: string;
   updated_at: string;
+  created_at: string;
   note: string;
 };

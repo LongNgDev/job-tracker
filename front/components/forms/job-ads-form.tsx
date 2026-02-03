@@ -25,15 +25,15 @@ const formSchema = z
     job_title: z.string().min(2).max(50),
     job_description: z.string().min(2),
     published_at: z.string(),
+    expired_at: z.string().optional(),
     location: z.string().max(50).optional(),
     job_type: z.string().min(2).max(50),
     source: z.string().min(2).max(50),
     url: z.url().optional(),
     skill_requirements: z.array(z.string()).optional(),
     tech_stack: z.array(z.string()).optional(),
-    expired_at: z.string().optional(),
-    salary_min: z.coerce.number().positive().optional(),
-    salary_max: z.coerce.number().positive().optional(),
+    salary_min: z.coerce.number().nonnegative().optional(),
+    salary_max: z.coerce.number().nonnegative().optional(),
     note: z.string().optional(),
   })
   .refine(
@@ -64,7 +64,7 @@ export function JobAdsForm({
       company_name: "",
       job_title: "",
       job_description: "",
-      published_at: new Date().toISOString().slice(0, 10), // or undefined if you want blank
+      published_at: new Date().toISOString().slice(0, 10) || undefined, // or undefined if you want blank
       location: "",
       job_type: "",
       source: "",
@@ -281,7 +281,8 @@ export function JobAdsForm({
               <FormControl>
                 <Input
                   type="date"
-                  onChange={(e) => field.onChange(e.target.value)}
+                  // onChange={(e) => field.onChange(e.target.value)}
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -435,10 +436,12 @@ export function JobAdsForm({
                   type="number"
                   placeholder="e.g. 70000"
                   min={0}
-                  // value={field.value ?? ""}
+                  value={(field.value as number) ?? ""}
                   onChange={(e) =>
                     field.onChange(
-                      e.target.value === "" ? undefined : e.target.value,
+                      e.target.value === ""
+                        ? undefined
+                        : Number(e.target.value),
                     )
                   }
                 />
@@ -460,10 +463,12 @@ export function JobAdsForm({
                   type="number"
                   min={0}
                   placeholder="e.g. 90000"
-                  // value={field.value ?? ""}
+                  value={(field.value as number) ?? ""}
                   onChange={(e) =>
                     field.onChange(
-                      e.target.value === "" ? undefined : e.target.value,
+                      e.target.value === ""
+                        ? undefined
+                        : Number(e.target.value),
                     )
                   }
                 />

@@ -38,6 +38,8 @@ import {
   Item,
   ItemContent,
   ItemDescription,
+  ItemFooter,
+  ItemHeader,
   ItemTitle,
 } from "@/components/ui/item";
 
@@ -201,7 +203,9 @@ function ApplicationCard({
             <CardContent className="flex w-full justify-between gap-2">
               <div className="grow">
                 <div className="flex flex-col gap-4">
-                  <Badge className="px-4 text-xl capitalize">Applied</Badge>
+                  <Badge className="px-4 text-xl capitalize">
+                    {application.stage}
+                  </Badge>
                   <CardTitle className="text-3xl">{job.job_title}</CardTitle>
                   <Item className="from-background border-0 bg-linear-to-r from-20% to-80%">
                     <ItemContent className="flex flex-row items-center gap-4">
@@ -225,23 +229,26 @@ function ApplicationCard({
                 </div>
               </div>
 
-              <Item className="bg-background w-64 shadow-xl">
-                <ItemContent className="h-full items-center justify-around">
-                  <ItemTitle className="text-xl font-normal">Match</ItemTitle>
+              {/* <Item className="bg-background h-full w-64 items-center justify-around shadow-xl">
+                <ItemHeader>
+                  <ItemTitle>Created at</ItemTitle>
+                </ItemHeader>
+                <ItemContent></ItemContent>
+                <ItemFooter></ItemFooter>
+                <ItemTitle className="text-xl font-normal">Match</ItemTitle>
 
-                  <ItemDescription className="text-foreground text-4xl font-semibold">
-                    80%
-                  </ItemDescription>
+                <ItemDescription className="text-foreground text-4xl font-semibold">
+                  80%
+                </ItemDescription>
 
-                  <ItemDescription>
-                    {`Last updated at ${new Date(
-                      application.updated_at,
-                    ).toLocaleDateString("en-AU", {
-                      dateStyle: "medium",
-                    })}`}
-                  </ItemDescription>
-                </ItemContent>
-              </Item>
+                <ItemDescription>
+                  {`Last updated at ${new Date(
+                    application.updated_at,
+                  ).toLocaleDateString("en-AU", {
+                    dateStyle: "medium",
+                  })}`}
+                </ItemDescription>
+              </Item> */}
             </CardContent>
           </Card>
 
