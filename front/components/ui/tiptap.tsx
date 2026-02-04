@@ -16,7 +16,7 @@ const Tiptap = ({
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: "",
+        placeholder: "Input text here ...",
       }),
     ],
     content: value || "",

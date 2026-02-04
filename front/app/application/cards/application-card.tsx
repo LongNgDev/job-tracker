@@ -25,23 +25,21 @@ import { Badge } from "@/components/ui/badge";
 import { ApplicationTimeline } from "../application-timeline.types";
 import {
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Field, FieldContent, FieldDescription } from "@/components/ui/field";
 import {
   Item,
   ItemContent,
   ItemDescription,
-  ItemFooter,
-  ItemHeader,
   ItemTitle,
 } from "@/components/ui/item";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import TimelineForm from "../form/timeline-form";
 
 type ApplicationStatus =
   | "created"
@@ -71,6 +69,7 @@ function ApplicationCard({
   refetchTimeline: () => void;
 }) {
   const [id, setId] = useState(job.application_id);
+  const [timelineOpen, setTimelineOpen] = useState(false);
 
   useEffect(() => {
     setId(application?.id);
@@ -98,7 +97,7 @@ function ApplicationCard({
   const isDisabled = (status: ApplicationStatus) =>
     STATUS_ORDER.indexOf(status) <= currentIndex;
 
-  const createTimeline = async (status: string) => {
+  const createTimeline = async (value: ApplicationTimeline) => {
     if (!id) return;
 
     try {
@@ -108,8 +107,9 @@ function ApplicationCard({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            event_type: "system",
-            title: status,
+            event_type: value.event_type,
+            title: value.title,
+            description: value.description,
           }),
         },
       );
@@ -161,7 +161,7 @@ function ApplicationCard({
     }
   };
 
-  const updateStatusApplication = async (status: string) => {
+  const updateStatusApplication = async (values: ApplicationTimeline) => {
     console.log(id);
     if (!id) return;
 
@@ -170,7 +170,7 @@ function ApplicationCard({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status: status,
+          status: values.title,
           stage: "applying",
         }),
       });
@@ -184,7 +184,7 @@ function ApplicationCard({
 
       setApplication(updated);
 
-      await createTimeline(status);
+      await createTimeline(values);
 
       await refetchApp();
 
@@ -394,33 +394,29 @@ function ApplicationCard({
             </div>
             <Separator />
             <div className="flex justify-end gap-2 p-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant={"default"}>Advance</Button>
-                </DropdownMenuTrigger>
+              {application.status == "offer" && <Button>Accept</Button>}
 
-                {application.status == "offer" && <Button>Accept</Button>}
-                <DropdownMenuContent side={"top"}>
-                  <DropdownMenuItem>Add note</DropdownMenuItem>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {VISIBLE_STATUSES.map((status) => (
-                          <DropdownMenuItem
-                            key={status}
-                            disabled={isDisabled(status)}
-                            onClick={() => updateStatusApplication(status)}
-                            className="capitalize"
-                          >
-                            {status.replace("_", " ")}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Dialog open={timelineOpen} onOpenChange={setTimelineOpen}>
+                <DialogTrigger asChild>
+                  <Button>Advance</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogTitle></DialogTitle>
+
+                  <TimelineForm
+                    updateStatus={(values) => {
+                      return updateStatusApplication({
+                        id: "",
+                        application_id: id || "",
+                        created_at: new Date().toISOString(),
+                        ...values,
+                      } as ApplicationTimeline);
+                    }}
+                    setTimelineOpen={setTimelineOpen}
+                  />
+                </DialogContent>
+              </Dialog>
+
               <Button variant={"destructive"}>Rejected</Button>
             </div>
           </div>

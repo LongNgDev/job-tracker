@@ -85,10 +85,10 @@ function ViewJob() {
               {/* Title */}
 
               <div className="flex flex-col gap-2">
-                <CardTitle className="text-2xl tracking-wide">
+                <CardTitle className="text-2xl tracking-wide select-text">
                   {job?.job_title}
                 </CardTitle>
-                <CardDescription className="text-base">
+                <CardDescription className="text-base select-text">
                   {job?.company_name} • {job?.location}
                 </CardDescription>
               </div>
