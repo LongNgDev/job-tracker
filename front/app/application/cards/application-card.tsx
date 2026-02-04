@@ -16,7 +16,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Circle, FileQuestionMark } from "lucide-react";
+import { Circle, FileQuestionMark, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Application } from "../application.types";
 import { JobAd } from "@/app/jobs/job-ads.types";
@@ -170,8 +170,7 @@ function ApplicationCard({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status: values.title,
-          stage: "applying",
+          stage: values.title,
         }),
       });
 
@@ -203,7 +202,7 @@ function ApplicationCard({
             <CardContent className="flex w-full justify-between gap-2">
               <div className="grow">
                 <div className="flex flex-col gap-4">
-                  <Badge className="px-4 text-xl capitalize">
+                  <Badge className="px-4 text-xl uppercase">
                     {application.stage}
                   </Badge>
                   <CardTitle className="text-3xl">{job.job_title}</CardTitle>
@@ -302,24 +301,47 @@ function ApplicationCard({
           </div> */}
           <div className="flex gap-4">
             {/* Timeline */}
-            <Card className="grow">
-              <CardHeader>
+            <Card className="max-w-2/5">
+              <CardHeader className="flex items-center justify-between">
                 <CardTitle>Logs</CardTitle>
+                <Dialog open={timelineOpen} onOpenChange={setTimelineOpen}>
+                  <DialogTrigger asChild>
+                    {/* <Button variant={"outline"}>Advance</Button> */}
+                    <Button variant={"outline"}>
+                      <Plus />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogTitle></DialogTitle>
+
+                    <TimelineForm
+                      updateStatus={(values) => {
+                        return updateStatusApplication({
+                          id: "",
+                          application_id: id || "",
+                          created_at: new Date().toISOString(),
+                          ...values,
+                        } as ApplicationTimeline);
+                      }}
+                      setTimelineOpen={setTimelineOpen}
+                    />
+                  </DialogContent>
+                </Dialog>
               </CardHeader>
               <CardContent className="relative">
                 <div className="absolute top-0 left-7 h-full border-l-2" />
-                <ol className="relative max-h-100 space-y-4 overflow-y-auto">
+                <ol className="relative max-h-100 space-y-4 overflow-y-scroll">
                   {timeline ? (
                     <>
                       {[...timeline].map((e) => (
-                        <li className="group relative flex" key={e.id}>
+                        <li className="group relative flex w-full" key={e.id}>
                           <Circle
                             className="fill-muted-foreground group-first:fill-primary group-first:text-primary mt-1.75"
                             size={10}
                           />
 
-                          <div>
-                            <div className="flex items-center justify-center gap-4 px-2">
+                          <div className="flex w-[95%] flex-col">
+                            <div className="flex w-full items-center justify-between gap-4 px-2">
                               <CardTitle className="group-not-first:text-muted-foreground! text-base capitalize group-not-first:font-normal!">
                                 {e.title}
                               </CardTitle>
@@ -333,27 +355,8 @@ function ApplicationCard({
                                   },
                                 )}
                               </CardDescription>
-
-                              {/* <Badge
-                                variant={"outline"}
-                                className="bg-muted scale-75 font-bold tracking-wide uppercase"
-                              >
-                                {e.event_type}
-                              </Badge> */}
-
-                              {/* <div className="p-2"> */}
-                              {/*   <Badge
-                                variant={"outline"}
-                                className="bg-muted text-[10px] font-bold tracking-wide uppercase"
-                              >
-                                {e.event_type}
-                              </Badge>
-                              <CardTitle className="text-base capitalize group-not-first:font-normal!">
-                                {e.title}
-                              </CardTitle> */}
-                              {/* </div> */}
                             </div>
-                            <CardDescription className="px-4 py-2">
+                            <CardDescription className="w-full px-4 py-2 wrap-break-word">
                               {e.description}
                             </CardDescription>
                           </div>
@@ -373,7 +376,20 @@ function ApplicationCard({
                 <CardTitle>Note</CardTitle>
               </CardHeader>
               <Separator />
-              <CardContent>{application.note}</CardContent>
+              {application.note ? (
+                <CardContent>{application.note}</CardContent>
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle className="capitalize">No note yet</EmptyTitle>
+                  </EmptyHeader>
+                  <EmptyContent>
+                    <EmptyDescription>
+                      Add a note to remember context or next steps.
+                    </EmptyDescription>
+                  </EmptyContent>
+                </Empty>
+              )}
             </Card>
           </div>
           <div className="flex flex-col gap-4">
@@ -394,9 +410,7 @@ function ApplicationCard({
             </div>
             <Separator />
             <div className="flex justify-end gap-2 p-2">
-              {application.status == "offer" && <Button>Accept</Button>}
-
-              <Dialog open={timelineOpen} onOpenChange={setTimelineOpen}>
+              {/* <Dialog open={timelineOpen} onOpenChange={setTimelineOpen}>
                 <DialogTrigger asChild>
                   <Button>Advance</Button>
                 </DialogTrigger>
@@ -415,9 +429,41 @@ function ApplicationCard({
                     setTimelineOpen={setTimelineOpen}
                   />
                 </DialogContent>
-              </Dialog>
+              </Dialog> */}
 
-              <Button variant={"destructive"}>Rejected</Button>
+              <Button
+                variant={"default"}
+                onClick={() =>
+                  updateStatusApplication({
+                    id: "",
+                    application_id: id || "",
+                    created_at: new Date().toISOString(),
+                    event_type: "manual",
+                    title: "accepted",
+                    description: "",
+                  })
+                }
+                disabled={application.stage.toLocaleLowerCase() === "accepted"}
+              >
+                Accept
+              </Button>
+
+              <Button
+                variant={"destructive"}
+                onClick={() =>
+                  updateStatusApplication({
+                    id: "",
+                    application_id: id || "",
+                    created_at: new Date().toISOString(),
+                    event_type: "manual",
+                    title: "rejected",
+                    description: "",
+                  })
+                }
+                disabled={application.stage.toLocaleLowerCase() === "rejected"}
+              >
+                Reject
+              </Button>
             </div>
           </div>
         </CardContent>
